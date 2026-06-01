@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>01-03. StateGraph (Reducer)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>02. StateGraph (상태 관리, 상태 스키마)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,313 +7511,79 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=92122410">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0547a4d2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="%EB%A6%AC%EB%93%80%EC%84%9C(Reducer)---%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8">리듀서(Reducer) - 상태 업데이트<a class="anchor-link" href="#%EB%A6%AC%EB%93%80%EC%84%9C(Reducer)---%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8">¶</a></h2><ul>
-<li>리듀서는 LangGraph에서 상태 업데이트 로직을 정의하는 핵심 메커니즘</li>
-<li><strong>각 노드가 반환하는 업데이트를 기존 상태에 어떻게 적용할지 결정하는 함수</strong></li>
-<li><strong>리듀서의 필요성</strong><ul>
-<li>여러 노드가 동시에 또는 순차적으로 실행될 때, 각 노드의 출력을 상태에 통합하는 방법이 필요</li>
-<li>단순히 덮어쓰기만 하면 이전 정보가 손실될 수 있으며, 리듀서를 통해 누적, 병합, 최대값 유지 등 다양한 업데이트 전략을 구현할 수 있음</li>
+<h2 id="03.-StateGraph">03. StateGraph<a class="anchor-link" href="#03.-StateGraph">¶</a></h2><ul>
+<li><p>StateGraph는 LangGraph의 핵심 구성 요소로, 상태 기반의 워크플로우를 구축하는 데 사용되는 가장 기본적인 그래프 구조</p>
+</li>
+<li><p><strong>그래프는 노드와 엣지로 구성되며, 각 노드는 특정 작업을 수행하고 상태를 업데이트</strong></p>
+</li>
+<li><p><strong>StateGraph의 주요 특징은 상태를 중심으로 동작</strong></p>
+<ul>
+<li>상태는 <code>TypedDict</code>나 <code>Pydantic BaseModel</code>을 사용하여 정의되며, 그래프 실행 중 지속적으로 업데이트됨</li>
+<li>노드 간의 전환은 조건부 엣지를 통해 제어될 수 있어, 복잡한 의사 결정 프로세스를 모델링할 수 있음</li>
+<li>StateGraph는 재귀적 실행을 지원하여 반복적인 작업을 효과적으로 처리할 수 있음</li>
 </ul>
 </li>
-<li><strong>노드는 전체 상태가 아닌 업데이트할 부분만 반환하며, 리듀서는 이 부분 업데이트를 기존 상태와 결합</strong></li>
+<li><p><strong>체크포인터를 통해 상태를 저장하고 관리할 수 있어 중단과 재개가 가능한 워크플로우를 구현할 수 가능 $\rightarrow$ StateGraph는 복잡한 AI 시스템, 특히 대화형 에이전트나 다단계 의사 결정 프로세스를 구현하는 데 매우 적합</strong></p>
+</li>
 </ul>
 <br/>
-<h4 id="%EA%B8%B0%EB%B3%B8-%EB%8F%99%EC%9E%91-%EC%9B%90%EB%A6%AC">기본 동작 원리<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EB%8F%99%EC%9E%91-%EC%9B%90%EB%A6%AC">¶</a></h4><div class="highlight"><pre><span></span><span class="c1"># 리듀서 없음 = 덮어쓰기 (Default Reducer)</span>
-<span class="n">old_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
-<span class="n">new_update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}</span>
-<span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}</span>  <span class="c1"># 기존 값이 완전히 대체됨</span>
-
-<span class="c1"># 리듀서 있음 = 사용자 정의 동작</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
-<span class="n">old_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"items"</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}</span>
-<span class="n">new_update</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"items"</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]}</span>
-<span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"items"</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]}</span>  <span class="c1"># 리스트가 연결됨</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2da298f7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<img alt="No description has been provided for this image" src="img/napkin-selection.png" width="400"/>
 <br/>
-<h3 id="%EA%B8%B0%EB%B3%B8-%EB%A6%AC%EB%93%80%EC%84%9C">기본 리듀서<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EB%A6%AC%EB%93%80%EC%84%9C">¶</a></h3><br/>
-<h4 id="%EB%8D%AE%EC%96%B4%EC%93%B0%EA%B8%B0-(Default)">덮어쓰기 (Default)<a class="anchor-link" href="#%EB%8D%AE%EC%96%B4%EC%93%B0%EA%B8%B0-(Default)">¶</a></h4>
+<h3 id="%EA%B8%B0%EB%B3%B8-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C">기본 구성 요소<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C">¶</a></h3><br/>
+<h3 id="State-(%EC%83%81%ED%83%9C)---%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%A0%80%EC%9E%A5%EC%86%8C">State (상태) - 데이터 저장소<a class="anchor-link" href="#State-(%EC%83%81%ED%83%9C)---%EB%8D%B0%EC%9D%B4%ED%84%B0-%EC%A0%80%EC%9E%A5%EC%86%8C">¶</a></h3><ul>
+<li><strong>모든 노드가 공유하는 데이터 저장소</strong><ul>
+<li>모든 노드가 같은 State를 보고 수정</li>
+<li>Python의 <code>TypedDict</code>를 사용해서 정의</li>
+<li>어떤 종류의 데이터든 저장 가능</li>
+</ul>
+</li>
+</ul>
+<br/>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=279bc181">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cb94b69a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=19757af7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">SimpleState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">counter</span><span class="p">:</span> <span class="nb">int</span>          <span class="c1"># 기본 리듀서: 덮어쓰기</span>
-    <span class="n">current_user</span><span class="p">:</span> <span class="nb">str</span>     <span class="c1"># 기본 리듀서: 덮어쓰기</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># 기본 리듀서: 덮어쓰기</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fe0cd7b4">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_counter</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">SimpleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    이 노드는 counter 값만 업데이트</span>
-<span class="sd">    다른 키들(current_user, status)은 변경되지 않음</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s2">"counter"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=4b94380b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_multiple</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">SimpleState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    여러 키를 동시에 업데이트할 수 있음</span>
-<span class="sd">    반환하지 않은 키는 그대로 유지.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>           <span class="c1"># counter를 0으로 리셋</span>
-        <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"completed"</span>   <span class="c1"># status를 "completed"로 변경</span>
-    <span class="p">}</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1970c522">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=db3fe0d0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EB%82%B4%EC%9E%A5-%EB%A6%AC%EB%93%80%EC%84%9C">내장 리듀서<a class="anchor-link" href="#%EB%82%B4%EC%9E%A5-%EB%A6%AC%EB%93%80%EC%84%9C">¶</a></h3><br/>
-<h4 id="operator.add---%EB%A6%AC%EC%8A%A4%ED%8A%B8/%EB%AC%B8%EC%9E%90%EC%97%B4-%EC%B6%94%EA%B0%80"><code>operator.add</code> - 리스트/문자열 추가<a class="anchor-link" href="#operator.add---%EB%A6%AC%EC%8A%A4%ED%8A%B8/%EB%AC%B8%EC%9E%90%EC%97%B4-%EC%B6%94%EA%B0%80">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6d6aec31">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=07909743">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AddState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="c1"># Annotated[타입, 리듀서함수] 형식으로 리듀서 지정</span>
-    <span class="n">messages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>      <span class="c1"># 리스트에 추가</span>
-    <span class="n">log_text</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">add</span><span class="p">]</span>            <span class="c1"># 문자열 연결</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=5a333d29">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">add_message</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AddState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AddState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    add 리듀서의 동작:</span>
-<span class="sd">    - 리스트: 기존_리스트 + 새_리스트</span>
-<span class="sd">    - 문자열: 기존_문자열 + 새_문자열</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"새 메시지"</span><span class="p">],</span>              
-        <span class="s2">"log_text"</span><span class="p">:</span> <span class="s2">"새 로그 항목</span><span class="se">\n</span><span class="s2">"</span>            
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a1626dc8">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">initial_state</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"안녕하세요"</span><span class="p">],</span>
-    <span class="s2">"log_text"</span><span class="p">:</span> <span class="s2">"시작</span><span class="se">\n</span><span class="s2">"</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a4608c8c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><code>add_message</code> 노드 실행 후</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"안녕하세요"</span><span class="p">,</span> <span class="s2">"새 메시지"</span><span class="p">],</span>
-    <span class="s2">"log_text"</span><span class="p">:</span> <span class="s2">"시작</span><span class="se">\n</span><span class="s2">새 로그 항목</span><span class="se">\n</span><span class="s2">"</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0386e31b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="add_messages-:-%EB%A9%94%EC%8B%9C%EC%A7%80-%EC%A0%84%EC%9A%A9-%EB%A6%AC%EB%93%80%EC%84%9C"><code>add_messages</code> : 메시지 전용 리듀서<a class="anchor-link" href="#add_messages-:-%EB%A9%94%EC%8B%9C%EC%A7%80-%EC%A0%84%EC%9A%A9-%EB%A6%AC%EB%93%80%EC%84%9C">¶</a></h4><ul>
-<li>LangChain 메시지 객체를 위한 특별한 리듀서</li>
+<h4 id="MessagesState-:-%EB%8C%80%ED%99%94%ED%98%95-%EC%95%B1%EC%9D%84-%EC%9C%84%ED%95%9C-%ED%8E%B8%EC%9D%98-%ED%81%B4%EB%9E%98%EC%8A%A4"><code>MessagesState</code> : 대화형 앱을 위한 편의 클래스<a class="anchor-link" href="#MessagesState-:-%EB%8C%80%ED%99%94%ED%98%95-%EC%95%B1%EC%9D%84-%EC%9C%84%ED%95%9C-%ED%8E%B8%EC%9D%98-%ED%81%B4%EB%9E%98%EC%8A%A4">¶</a></h4><ul>
+<li>LangGraph는 대화형 앱에 자주 사용되는 <code>MessagesState</code>를 내장으로 제공</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=97ab70c8">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9fcf1b1e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">HumanMessage</span><span class="p">,</span> <span class="n">AIMessage</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph.message</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_messages</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=29b59cea">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ChatState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">messages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">add_messages</span><span class="p">]</span>  <span class="c1"># 메시지 전용 리듀서</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d9a96e33">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_user_input</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ChatState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChatState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    add_messages 리듀서의 특징:</span>
-<span class="sd">    1. 새 메시지는 리스트에 추가</span>
-<span class="sd">    2. 동일한 ID를 가진 메시지는 업데이트</span>
-<span class="sd">    3. 자동으로 메시지 객체로 역직렬화</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"사용자 입력"</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s2">"msg_001"</span><span class="p">)]</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bbef5602">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<ul>
-<li><strong>혹은 <code>MessageState</code> 사용</strong></li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0865e745">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">MessagesState</span>
@@ -7826,490 +7592,346 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=614215f4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2808bd70">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">MessagesState</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""MessagesState를 상속받으면 messages 필드와 add_messages 리듀서가 자동 포함"""</span>
-    <span class="n">documents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># 추가 필드 정의 가능</span>
+    <span class="c1"># messages 필드가 자동 포함 (add_messages 리듀서 적용)</span>
+    <span class="n">user_name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># 추가 필드도 정의 가능</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f46e206a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f3835dbb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%A0%95%EC%9D%98-%EB%A6%AC%EB%93%80%EC%84%9C">사용자 정의 리듀서<a class="anchor-link" href="#%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%A0%95%EC%9D%98-%EB%A6%AC%EB%93%80%EC%84%9C">¶</a></h3><ul>
-<li>특정 비즈니스 로직을 구현하는 리듀서</li>
+<h4 id="Node-(%EB%85%B8%EB%93%9C)---%EC%9E%91%EC%97%85%ED%95%98%EB%8A%94-%ED%95%A8%EC%88%98">Node (노드) - 작업하는 함수<a class="anchor-link" href="#Node-(%EB%85%B8%EB%93%9C)---%EC%9E%91%EC%97%85%ED%95%98%EB%8A%94-%ED%95%A8%EC%88%98">¶</a></h4><ul>
+<li><strong>Node는 실제 작업을 수행하는 Python 함수입니다. 현재 상태를 받아서 새로운 상태 반환</strong></li>
+<li><strong>노드의 규칙</strong>:<ul>
+<li>항상 state를 첫 번째 매개변수</li>
+<li>딕셔너리 형태로 새로운 상태를 반환</li>
+<li>반환하지 않은 필드는 기존 값을 유지</li>
 </ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c48ed9de">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">max_reducer</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    더 큰 값을 유지하는 리듀서</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        existing: 현재 상태의 값</span>
-<span class="sd">        new: 노드가 반환한 새 값</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        둘 중 더 큰 값</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">existing</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="n">new</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=79e99ce5">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MaxState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">highest_score</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">max_reducer</span><span class="p">]</span>
-    <span class="n">current_score</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 리듀서 없음 (덮어쓰기)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7858d069">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<ul>
-<li><p><strong><code>update_score</code> 실행 후:</strong></p>
-<ul>
-<li><code>{"highest_score": 90, "current_score": 85}</code></li>
-</ul>
-<p>$\rightarrow$ <code>highest_score</code>는 90이 더 크므로 유지, <code>current_score</code>는 85로 덮어쓰기</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0b6dd497">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d342a106">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_score</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">MaxState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaxState</span><span class="p">:</span>
-    <span class="n">new_score</span> <span class="o">=</span> <span class="mi">85</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"highest_score"</span><span class="p">:</span> <span class="n">new_score</span><span class="p">,</span>  <span class="c1"># max_reducer가 적용됨</span>
-        <span class="s2">"current_score"</span><span class="p">:</span> <span class="n">new_score</span>   <span class="c1"># 단순 덮어쓰기</span>
-    <span class="p">}</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 카운터를 1 증가시키는 노드</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_one</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"count"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}</span>
+
+<span class="c1"># 이름을 설정하는 노드  </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_name</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c75189c6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f919a56c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EB%B3%B5%EC%9E%A1%ED%95%9C-%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%A0%95%EC%9D%98-%EB%A6%AC%EB%93%80%EC%84%9C">복잡한 사용자 정의 리듀서<a class="anchor-link" href="#%EB%B3%B5%EC%9E%A1%ED%95%9C-%EC%82%AC%EC%9A%A9%EC%9E%90-%EC%A0%95%EC%9D%98-%EB%A6%AC%EB%93%80%EC%84%9C">¶</a></h3><ul>
-<li>딕셔너리 병합</li>
+<h4 id="Edge-(%EC%97%A3%EC%A7%80)---%EC%97%B0%EA%B2%B0%ED%95%98%EB%8A%94-%ED%99%94%EC%82%B4%ED%91%9C">Edge (엣지) - 연결하는 화살표<a class="anchor-link" href="#Edge-(%EC%97%A3%EC%A7%80)---%EC%97%B0%EA%B2%B0%ED%95%98%EB%8A%94-%ED%99%94%EC%82%B4%ED%91%9C">¶</a></h4><ul>
+<li><strong>Edge는 노드들 사이의 연결을 정의</strong></li>
 </ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ffbbae53">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">merge_dict_reducer</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    딕셔너리를 깊게 병합하는 리듀서</span>
-<span class="sd">    중첩된 딕셔너리도 재귀적으로 병합</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">new</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">new</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">existing</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
 
-    <span class="n">result</span> <span class="o">=</span> <span class="n">existing</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">new</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">result</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="c1"># 중첩된 딕셔너리는 재귀적으로 병합</span>
-            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">merge_dict_reducer</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># 그 외의 경우는 덮어쓰기</span>
-            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="n">result</span>
+<span class="c1"># 기본적인 엣지 연결</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"노드1"</span><span class="p">,</span> <span class="s2">"노드2"</span><span class="p">)</span>  <span class="c1"># 노드1 → 노드2</span>
+
+<span class="c1"># 시작과 끝 연결 (START, END 상수 사용)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"첫번째노드"</span><span class="p">)</span>  <span class="c1"># 시작 → 첫번째노드</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"마지막노드"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>   <span class="c1"># 마지막노드 → 끝</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f2a67d21">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ConfigState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">settings</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">merge_dict_reducer</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b8abf786">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [40]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_ui_settings</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ConfigState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""UI 설정만 업데이트"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"settings"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"ui"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"theme"</span><span class="p">:</span> <span class="s2">"dark"</span><span class="p">}</span>  <span class="c1"># ui.theme만 변경</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7e0dabf2">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_performance_settings</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ConfigState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""성능 설정만 업데이트"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"settings"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"performance"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cache_size"</span><span class="p">:</span> <span class="mi">1000</span><span class="p">}</span>  <span class="c1"># performance.cache_size만 변경</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e1c2affc">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8a1d74b1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<ul>
-<li><strong>실행 시나리오</strong></li>
-</ul>
-<ol>
-<li>초기 상태: <code>{"settings": {"ui": {"theme": "light", "font": "Arial"}, "performance": {"cache_size": 500}}}</code></li>
-<li><code>update_ui_settings</code> 실행 후:</li>
-</ol>
-<ul>
-<li><code>{"settings": {"ui": {"theme": "dark", "font": "Arial"}, "performance": {"cache_size": 500}}}</code> $\rightarrow$ <code>ui.theme</code>만 변경되고 나머지는 유지</li>
-</ul>
+<h4 id="%EC%A0%84%EC%B2%B4-%EA%B5%AC%EC%A1%B0-%EC%98%88%EC%8B%9C">전체 구조 예시<a class="anchor-link" href="#%EC%A0%84%EC%B2%B4-%EA%B5%AC%EC%A1%B0-%EC%98%88%EC%8B%9C">¶</a></h4><img alt="No description has been provided for this image" src="img/1-3-1.png" width="150"/>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c224f2af">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EA%B3%A0%EA%B8%89-%EB%A6%AC%EB%93%80%EC%84%9C-%ED%8C%A8%ED%84%B4">고급 리듀서 패턴<a class="anchor-link" href="#%EA%B3%A0%EA%B8%89-%EB%A6%AC%EB%93%80%EC%84%9C-%ED%8C%A8%ED%84%B4">¶</a></h3><ul>
-<li><strong>리스트 내 객체를 ID로 식별하여 업데이트하는 패턴</strong></li>
-</ul>
-<br/>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6c589c6a">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=5f10340e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [42]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_by_id_reducer</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">new</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    ID를 기준으로 리스트의 항목을 업데이트하는 리듀서</span>
-
-<span class="sd">    동작 방식:</span>
-<span class="sd">    1. 기존 리스트를 ID별로 인덱싱</span>
-<span class="sd">    2. 새 항목이 같은 ID를 가지면 업데이트</span>
-<span class="sd">    3. 새 ID면 추가</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">existing</span><span class="p">:</span>
-        <span class="n">existing</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">new</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">existing</span>
-
-    <span class="c1"># 기존 항목들을 ID로 인덱싱 (딕셔너리로 변환)</span>
-    <span class="n">existing_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">):</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">}</span>
-
-    <span class="c1"># 새 항목들 처리</span>
-    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">new</span><span class="p">:</span>
-        <span class="n">item_id</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">item_id</span><span class="p">:</span>
-            <span class="n">existing_dict</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>  <span class="c1"># 업데이트 또는 추가</span>
-
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">existing_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=786692ca">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [43]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">EntityState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">users</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">update_by_id_reducer</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=69b72949">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [44]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">EntityState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EntityState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""특정 사용자 정보 업데이트"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"users"</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user1"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"김철수"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">31</span><span class="p">},</span>  <span class="c1"># user1 업데이트</span>
-            <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user3"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"박영수"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">28</span><span class="p">}</span>   <span class="c1"># user3 추가</span>
-        <span class="p">]</span>
-    <span class="p">}</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8ee101e8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8ca68dde">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li><strong>실행 예시</strong>:</li>
+<li>State: 카운터를 저장하는 상자</li>
 </ul>
-<ol>
-<li>기존 상태:</li>
-</ol>
-<div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">"users"</span><span class="p">:</span> <span class="p">[</span>
-   <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user1"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"김철수"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">30</span><span class="p">},</span>
-   <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user2"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"이영희"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">25</span><span class="p">}</span>
-<span class="p">]}</span>
-</pre></div>
-<ol start="2">
-<li><code>update_user</code> 실행 후:</li>
-</ol>
-<div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">"users"</span><span class="p">:</span> <span class="p">[</span>
-    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user1"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"김철수"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">31</span><span class="p">},</span>  <span class="c1"># age가 31로 업데이트</span>
-    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user2"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"이영희"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">25</span><span class="p">},</span>  <span class="c1"># 변경 없음</span>
-    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"user3"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"박영수"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">28</span><span class="p">}</span>   <span class="c1"># 새로 추가</span>
-<span class="p">]}</span>
-</pre></div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ddf2022c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8">상태 업데이트<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8">¶</a></h3><br/>
-<h4 id="%EA%B8%B0%EB%B3%B8-%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC-%EC%98%88%EC%8B%9C">기본 상태 관리 예시<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC-%EC%98%88%EC%8B%9C">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a3c5f1f4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=01ee1389">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [45]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CounterState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f54df362">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1115b593">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>상태 정의</li>
+<li>Node: 카운터를 증가시키는 함수</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=96359ac7">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=507d63ec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [46]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">State</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">message_count</span><span class="p">:</span> <span class="nb">int</span>                           <span class="c1"># 기본 리듀서 (덮어쓰기)</span>
-    <span class="n">conversation</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>      <span class="c1"># add 리듀서 (리스트 연결)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">increment</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"현재 카운트: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">new_count</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"새로운 카운트: </span><span class="si">{</span><span class="n">new_count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"count"</span><span class="p">:</span> <span class="n">new_count</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b716113a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=97a59f12">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>노드 함수 정의</li>
+<li>Edge: 노드들을 연결하는 그래프</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=bd78d8f0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2d860a8a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [47]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">node_1</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">State</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    첫 번째 노드: 대화 시작</span>
-<span class="sd">    - message_count를 1로 설정</span>
-<span class="sd">    - conversation에 인사말 추가</span>
-<span class="sd">    """</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Node 1 - 현재 대화: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'conversation'</span><span class="p">,</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"message_count"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="s2">"conversation"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"안녕하세요!"</span><span class="p">]</span>
-    <span class="p">}</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">CounterState</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"increment"</span><span class="p">,</span> <span class="n">increment</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"increment"</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"increment"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ff30ffd0">
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>&lt;langgraph.graph.state.StateGraph at 0x28064821b80&gt;</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=51dc4c46">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [48]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">node_2</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">State</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    두 번째 노드: 대화 이어가기</span>
-<span class="sd">    - message_count는 업데이트하지 않음 (이전 값 유지)</span>
-<span class="sd">    - conversation에 새 메시지 추가 (add 리듀서로 누적)</span>
-<span class="sd">    """</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Node 2 - 현재 대화: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'conversation'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="c1"># message_count를 반환하지 않으므로 node_1에서 설정한 값이 유지됨</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"conversation"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"어떻게 도와드릴까요?"</span><span class="p">]</span>
-    <span class="p">}</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"count"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최종 결과: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=74aa4b63">
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>현재 카운트: 0
+새로운 카운트: 1
+최종 결과: {'count': 1}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=369a8d1e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
+<h4 id="%EB%91%90-%EA%B0%9C%EC%9D%98-%EB%85%B8%EB%93%9C-%EC%97%B0%EA%B2%B0">두 개의 노드 연결<a class="anchor-link" href="#%EB%91%90-%EA%B0%9C%EC%9D%98-%EB%85%B8%EB%93%9C-%EC%97%B0%EA%B2%B0">¶</a></h4>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e7e4c9a2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>노드 정의</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=edbe47cb">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 첫 번째 증가 함수</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">first_increment</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"첫 번째 증가"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"count"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}</span>
+
+<span class="c1"># 두 번째 증가 함수  </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">second_increment</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"두 번째 증가"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"count"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5bb8f37f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
 <li>그래프 구성</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f9b69b05">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bfb4facf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">CounterState</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"first"</span><span class="p">,</span> <span class="n">first_increment</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"second"</span><span class="p">,</span> <span class="n">second_increment</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>&lt;langgraph.graph.state.StateGraph at 0x28064846000&gt;</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=597d0e93">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>엣지 구성</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fa4c9a95">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8317,22 +7939,90 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">State</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"node_1"</span><span class="p">,</span> <span class="n">node_1</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"node_2"</span><span class="p">,</span> <span class="n">node_2</span><span class="p">)</span>
-
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"node_1"</span><span class="p">)</span>  <span class="c1"># 시작 -&gt; node_1</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"node_1"</span><span class="p">,</span> <span class="s2">"node_2"</span><span class="p">)</span>  <span class="c1"># node_1 -&gt; node_2</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"node_2"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>  <span class="c1"># node_2 -&gt; 종료</span>
-
-<span class="n">compiled_graph</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"first"</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"first"</span><span class="p">,</span> <span class="s2">"second"</span><span class="p">)</span> 
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"second"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=24cf7ac1">
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>&lt;langgraph.graph.state.StateGraph at 0x28064846000&gt;</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a2175676">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"count"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최종 결과: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>첫 번째 증가
+두 번째 증가
+최종 결과: {'count': 11}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=afee2ada">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EC%83%81%ED%83%9C-(State)">상태 (State)<a class="anchor-link" href="#%EC%83%81%ED%83%9C-(State)">¶</a></h3><ul>
+<li><strong>LangGraph에서 상태는 그래프의 전체 데이터 흐름을 관리하는 핵심 요소</strong></li>
+<li>주로 TypedDict나 Pydantic BaseModel을 사용하여 정의</li>
+<li><strong>그래프의 모든 노드와 엣지에 대한 입력 스키마 역할</strong></li>
+</ul>
+<br/>
+<h4 id="%EB%A6%AC%EB%93%80%EC%84%9C%EC%99%80-add_messages">리듀서와 <code>add_messages</code><a class="anchor-link" href="#%EB%A6%AC%EB%93%80%EC%84%9C%EC%99%80-add_messages">¶</a></h4><ul>
+<li><strong>상태 필드에 리듀서(Reducer)를 지정하면 노드가 반환한 값을 기존 상태에 어떻게 적용할지 정의 가능</strong><ul>
+<li>대화형 앱에서는 <code>add_messages</code> 리듀서가 표준 패턴</li>
+</ul>
+</li>
+</ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph.message</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_messages</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ChatState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">messages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">add_messages</span><span class="p">]</span>  <span class="c1"># 메시지 자동 누적</span>
+    <span class="n">user_name</span><span class="p">:</span> <span class="nb">str</span>                            <span class="c1"># 일반 필드 (덮어쓰기)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=108beefb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8340,438 +8030,851 @@ a.anchor-link {
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
 <ul>
-<li>실행</li>
+<li><strong><code>add_messages</code>는 새 메시지를 기존 리스트에 추가하고, 같은 ID의 메시지는 업데이트하는 리듀서</strong></li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=caaff093">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d2e24af6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [51]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">initial_state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"message_count"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"conversation"</span><span class="p">:</span> <span class="p">[]}</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">compiled_graph</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">initial_state</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">MessagesState</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">MessagesState</span><span class="p">):</span>
+    <span class="c1"># messages 필드 + add_messages 리듀서가 자동 포함</span>
+    <span class="n">user_name</span><span class="p">:</span> <span class="nb">str</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Node 1 - 현재 대화: []
-Node 2 - 현재 대화: ['안녕하세요!']
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2687d0b8">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [52]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== 최종 결과 ==="</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"메시지 수: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'message_count'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"대화 내용: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'conversation'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-=== 최종 결과 ===
-메시지 수: 1
-대화 내용: ['안녕하세요!', '어떻게 도와드릴까요?']
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b79c2c69">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=91640e85">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h4 id="%EB%B3%B5%ED%95%A9-%EB%A6%AC%EB%93%80%EC%84%9C-%ED%99%9C%EC%9A%A9">복합 리듀서 활용<a class="anchor-link" href="#%EB%B3%B5%ED%95%A9-%EB%A6%AC%EB%93%80%EC%84%9C-%ED%99%9C%EC%9A%A9">¶</a></h4>
+<h3 id="%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC">상태 관리<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC">¶</a></h3><ul>
+<li>LangGraph에서 상태 관리는 AI 시스템의 핵심</li>
+<li>상태(State)는 시스템이 처리하는 모든 정보를 담는 그릇이며, 노드 간에 데이터를 전달하고 축적하는 역할</li>
+</ul>
+<br/>
+<h4 id="%EC%83%81%ED%83%9C%EC%9D%98-%EB%B3%B8%EC%A7%88">상태의 본질<a class="anchor-link" href="#%EC%83%81%ED%83%9C%EC%9D%98-%EB%B3%B8%EC%A7%88">¶</a></h4><ul>
+<li>LangGraph는 Google의 Pregel 시스템에서 영감을 받은 메시지 전달(Message Passing) 아키텍처를 사용</li>
+</ul>
+<ol>
+<li>노드는 독립적인 처리 단위: 각 노드는 독립적으로 실행되며, 서로 직접 통신하지 않음</li>
+<li>상태를 통한 간접 통신: 노드들은 공유 상태를 통해 데이터를 주고받음</li>
+<li>Super-step 실행 모델: 병렬 실행 가능한 노드들은 같은 super-step에서 동시에 실행</li>
+</ol>
+<br/>
+<h4 id="%EC%83%81%ED%83%9C%EC%9D%98-%EC%97%AD%ED%95%A0">상태의 역할<a class="anchor-link" href="#%EC%83%81%ED%83%9C%EC%9D%98-%EC%97%AD%ED%95%A0">¶</a></h4><ul>
+<li>간단한 상태 예시</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ChatState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">user_message</span><span class="p">:</span> <span class="nb">str</span>      <span class="c1"># 노드가 처리할 현재 메시지. 각 노드 실행 시 덮어쓰기됩니다</span>
+    <span class="n">chat_history</span><span class="p">:</span> <span class="nb">list</span>     <span class="c1"># 대화의 연속성을 위해 누적되는 리스트</span>
+    <span class="n">user_context</span><span class="p">:</span> <span class="nb">dict</span>     <span class="c1"># 사용자별 설정, 선호도 등을 저장하는 유연한 구조</span>
+    <span class="n">system_status</span><span class="p">:</span> <span class="nb">str</span>     <span class="c1"># 워크플로우의 현재 상태를 추적 (예: "processing", "waiting", "completed")</span>
+</pre></div>
+<br/>
+<h3 id="%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC%EC%9D%98-%EC%A4%91%EC%9A%94%EC%84%B1">상태 관리의 중요성<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC%EC%9D%98-%EC%A4%91%EC%9A%94%EC%84%B1">¶</a></h3><ul>
+<li>복잡한 대화 흐름에서 맥락을 일관되게 유지하여 사용자 경험을 향상</li>
+<li><strong>일관성(Consistency) : 대화나 작업의 전체 흐름에서 정보가 손실되지 않고 유지되는 것을 의미</strong><ul>
+<li>예) 사용자가 "내 이름은 홍길동입니다"라고 한 후 "내 이름이 뭐라고 했죠?"라고 물으면 시스템이 이를 기억</li>
+</ul>
+</li>
+</ul>
+<br/>
+<h4 id="%EC%9D%BC%EA%B4%80%EC%84%B1-%EC%9C%A0%EC%A7%80">일관성 유지<a class="anchor-link" href="#%EC%9D%BC%EA%B4%80%EC%84%B1-%EC%9C%A0%EC%A7%80">¶</a></h4><ul>
+<li>대화 맥락 유지 예시<ul>
+<li><code>def conversation_node(state: ChatState):</code> : 첫 번째 인자로 현재 상태를 받으며, 선택적으로 두 번째 인자로 config를 받을 수 있음</li>
+<li><code>state["chat_history"][-3:]</code> : 너무 많은 컨텍스트는 LLM의 성능을 저하시키고 비용을 증가시키며, 3개는 일반적으로 충분한 컨텍스트를 제공하는 균형점</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">conversation_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ChatState</span><span class="p">):</span>
+    <span class="c1"># 이전 대화 내용을 참조하여 일관된 응답 생성</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"chat_history"</span><span class="p">][</span><span class="o">-</span><span class="mi">3</span><span class="p">:])</span>  <span class="c1"># 최근 3개 대화</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">generate_contextual_response</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"user_message"</span><span class="p">],</span> <span class="n">context</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"ai_response"</span><span class="p">:</span> <span class="n">response</span><span class="p">}</span>
+</pre></div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f8eee7a3">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5c277c92">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EB%A7%A5%EB%9D%BD-%EC%9D%B4%ED%95%B4-%ED%96%A5%EC%83%81">맥락 이해 향상<a class="anchor-link" href="#%EB%A7%A5%EB%9D%BD-%EC%9D%B4%ED%95%B4-%ED%96%A5%EC%83%81">¶</a></h4><ul>
+<li>축적된 정보를 바탕으로 더 정확하고 맥락에 맞는 응답을 생성</li>
+<li>맥락 이해 : 단순한 키워드 매칭을 넘어서는 것<ul>
+<li>예) "그것을 예약해주세요"라는 요청이 있을 때, "그것"이 이전 대화에서 언급된 "오후 3시 회의실"을 의미한다는 것을 이해하는 능력</li>
+</ul>
+</li>
+</ul>
+<br/>
+<h4 id="%EB%B3%B5%EC%9E%A1%ED%95%9C-%EC%9E%91%EC%97%85-%EC%B2%98%EB%A6%AC">복잡한 작업 처리<a class="anchor-link" href="#%EB%B3%B5%EC%9E%A1%ED%95%9C-%EC%9E%91%EC%97%85-%EC%B2%98%EB%A6%AC">¶</a></h4><ul>
+<li>복잡한 작업은 여러 단계로 구성:<ul>
+<li>예) "항공권 예약" 작업:<ul>
+<li>1.날짜 확인 $\rightarrow$ 2. 목적지 선택 $\rightarrow$ 3. 좌석 선택 $\rightarrow$ 4. 결제 처리</li>
+<li>각 단계의 결과가 다음 단계의 입력이 되며, 상태 관리가 이를 가능</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<br/>
+<h4 id="%EC%98%A4%EB%A5%98-%EB%B3%B5%EA%B5%AC-%EB%B0%8F-%EC%A4%91%EB%8B%A8%EC%A0%90-%EA%B4%80%EB%A6%AC">오류 복구 및 중단점 관리<a class="anchor-link" href="#%EC%98%A4%EB%A5%98-%EB%B3%B5%EA%B5%AC-%EB%B0%8F-%EC%A4%91%EB%8B%A8%EC%A0%90-%EA%B4%80%EB%A6%AC">¶</a></h4><ul>
+<li>체크포인팅(Checkpointing)은 프로그램의 현재 상태를 저장하는 기술</li>
+<li>문제가 발생했을 때 마지막 체크포인트부터 다시 시작</li>
+</ul>
+<br/>
+<h4 id="%EC%84%B1%EB%8A%A5-%EC%B5%9C%EC%A0%81%ED%99%94">성능 최적화<a class="anchor-link" href="#%EC%84%B1%EB%8A%A5-%EC%B5%9C%EC%A0%81%ED%99%94">¶</a></h4><ul>
+<li>상태에 계산 결과를 캐싱하면 동일한 계산을 반복하지 않아도 됨<ul>
+<li>예) API 호출 결과를 상태에 저장하면 같은 요청에 대해 재호출할 필요가 없음</li>
+</ul>
+</li>
+</ul>
+<br/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d8e16c21">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="%EA%B8%B0%EB%B3%B8-%EC%83%81%ED%83%9C-%EA%B5%AC%EC%A1%B0">기본 상태 구조<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EC%83%81%ED%83%9C-%EA%B5%AC%EC%A1%B0">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f57704dc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [62]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">List</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7d23bb82">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b4d272cd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [63]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">keep_last_n</span><span class="p">(</span><span class="n">existing</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""최근 n개 항목만 유지하는 리듀서"""</span>
-    <span class="n">combined</span> <span class="o">=</span> <span class="p">(</span><span class="n">existing</span> <span class="ow">or</span> <span class="p">[])</span> <span class="o">+</span> <span class="p">(</span><span class="n">new</span> <span class="ow">or</span> <span class="p">[])</span>
-    <span class="k">return</span> <span class="n">combined</span><span class="p">[</span><span class="o">-</span><span class="n">n</span><span class="p">:]</span>  <span class="c1"># 마지막 n개만 반환</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BasicState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="c1"># 단순 값들 - 덮어쓰기 방식</span>
+    <span class="n">current_step</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="c1"># 누적되는 값들 - 추가 방식</span>
+    <span class="n">messages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>
+    <span class="n">processing_log</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=896e4331">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=870f7fbe">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EB%A6%AC%EB%93%80%EC%84%9C(Reducer)">리듀서(Reducer)<a class="anchor-link" href="#%EB%A6%AC%EB%93%80%EC%84%9C(Reducer)">¶</a></h4><ul>
+<li><strong>리듀서는 함수형 프로그래밍 개념으로, "기존 값과 새 값을 어떻게 합칠 것인가"를 정의하는 함수</strong><ul>
+<li>JavaScript의 Redux나 React의 useReducer와 유사한 개념</li>
+</ul>
+</li>
+</ul>
+<br/>
+<ol>
+<li><strong>기본 리듀서 (덮어쓰기)</strong></li>
+</ol>
+<ul>
+<li>새 값이 들어오면 기존 값은 완전히 사라짐</li>
+<li>가장 단순하고 직관적인 방식</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="n">current_step</span><span class="p">:</span> <span class="nb">str</span>
+<span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span>
+</pre></div>
+<br/>
+<div class="highlight"><pre><span></span><span class="c1"># 초기 상태</span>
+<span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"current_step"</span><span class="p">:</span> <span class="s2">"시작"</span><span class="p">,</span> <span class="s2">"user_id"</span><span class="p">:</span> <span class="s2">"user123"</span><span class="p">}</span>
+
+<span class="c1"># 노드 1 실행</span>
+<span class="n">update1</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"current_step"</span><span class="p">:</span> <span class="s2">"처리중"</span><span class="p">}</span>
+<span class="c1"># 결과: {"current_step": "처리중", "user_id": "user123"}</span>
+
+<span class="c1"># 노드 2 실행  </span>
+<span class="n">update2</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"current_step"</span><span class="p">:</span> <span class="s2">"완료"</span><span class="p">}</span>
+<span class="c1"># 결과: {"current_step": "완료", "user_id": "user123"}</span>
+</pre></div>
+<br/>
+<ol start="2">
+<li><strong>커스텀 리듀서 (<code>add</code>를 사용한 누적)</strong></li>
+</ol>
+<div class="highlight"><pre><span></span><span class="n">messages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>
+<span class="n">processing_log</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>
+</pre></div>
+<ul>
+<li><strong><code>Annotated</code> 타입</strong> : Python 3.9에서 도입된 타입 힌팅 기능<ul>
+<li>첫 번째 인자: 실제 타입 (List[str])</li>
+<li>두 번째 인자: 메타데이터 (리듀서 함수 등)</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f0347921">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7cd4df50">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 리스트의 경우</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">add</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>  <span class="c1"># [1, 2, 3, 4]</span>
+
+<span class="c1"># 문자열의 경우</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">,</span> <span class="s2">" World"</span><span class="p">)</span>  <span class="c1"># "Hello World"</span>
+
+<span class="c1"># 숫자의 경우</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># 8</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1b34f589">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EC%A0%81%EC%9A%A9-%EC%98%88%EC%8B%9C">적용 예시<a class="anchor-link" href="#%EC%A0%81%EC%9A%A9-%EC%98%88%EC%8B%9C">¶</a></h4><ul>
+<li>초기 상태</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=813ae8df">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"안녕하세요"</span><span class="p">],</span>
+    <span class="s2">"processing_log"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"시작"</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a51c89c1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>부분 함수로 리듀서 생성</li>
+<li>노드 1 실행<ul>
+<li>업데이트 후 상태<ul>
+<li><code>messages</code>: ["안녕하세요", "어떻게 도와드릴까요?"]</li>
+<li><code>processing_log</code>: ["시작", "사용자 인사 감지"]</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=09b79dac">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e0e9ff8c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [64]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7c70afcc">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [65]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">keep_last_5</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">keep_last_n</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=253d55fa">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>상태 정의</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ba5f319d">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [72]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_max</span><span class="p">(</span><span class="n">left</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="c1"># 최초 값(None 등) 처리를 위해 max를 안전하게 사용</span>
-    <span class="k">if</span> <span class="n">left</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">right</span>
-    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3787adf7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [73]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">AdvancedState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">total_tokens</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">add</span><span class="p">]</span>           <span class="c1"># 토큰 수 누적</span>
-    <span class="n">max_score</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">update_max</span><span class="p">]</span>            <span class="c1"># 최고 점수 유지</span>
-    <span class="n">recent_actions</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">keep_last_5</span><span class="p">]</span> <span class="c1"># 최근 5개 액션만 유지</span>
-    <span class="n">current_status</span><span class="p">:</span> <span class="nb">str</span>    
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5005e70e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>노드 함수 정의</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8374f78f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [74]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_input</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AdvancedState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdvancedState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""사용자 입력 처리"""</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">node1</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"total_tokens"</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>  <span class="c1"># 150 토큰 추가</span>
-        <span class="s2">"max_score"</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">,</span>    <span class="c1"># 점수 0.85</span>
-        <span class="s2">"recent_actions"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"input_received"</span><span class="p">],</span>
-        <span class="s2">"current_status"</span><span class="p">:</span> <span class="s2">"processing"</span>
+        <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"어떻게 도와드릴까요?"</span><span class="p">],</span>
+        <span class="s2">"processing_log"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"사용자 인사 감지"</span><span class="p">]</span>
     <span class="p">}</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0195d2e9">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [75]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">analyze_content</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AdvancedState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdvancedState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""콘텐츠 분석"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"total_tokens"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># 200 토큰 추가</span>
-        <span class="s2">"max_score"</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>    <span class="c1"># 더 높은 점수</span>
-        <span class="s2">"recent_actions"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"analysis_started"</span><span class="p">,</span> <span class="s2">"analysis_completed"</span><span class="p">],</span>
-        <span class="s2">"current_status"</span><span class="p">:</span> <span class="s2">"analyzed"</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=76b8c091">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [76]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_response</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">AdvancedState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdvancedState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""응답 생성"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"total_tokens"</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>  <span class="c1"># 300 토큰 추가</span>
-        <span class="s2">"max_score"</span><span class="p">:</span> <span class="mf">0.88</span><span class="p">,</span>    <span class="c1"># 낮은 점수 (무시됨)</span>
-        <span class="s2">"recent_actions"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"response_generated"</span><span class="p">],</span>
-        <span class="s2">"current_status"</span><span class="p">:</span> <span class="s2">"completed"</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bb684a8c">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=413dfd36">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>그래프 구성 및 실행</li>
+<li>노드 2 실행<ul>
+<li>최종 상태<ul>
+<li><code>messages</code>: ["안녕하세요", "어떻게 도와드릴까요?", "무엇을 도와드릴까요?"]</li>
+<li><code>processing_log</code>: ["시작", "사용자 인사 감지", "응답 생성 완료"]</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=126c6f34">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=df0b9610">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [77]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">AdvancedState</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="n">process_input</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"analyze"</span><span class="p">,</span> <span class="n">analyze_content</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"generate"</span><span class="p">,</span> <span class="n">generate_response</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[77]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;langgraph.graph.state.StateGraph at 0x15a3b998740&gt;</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a39ba888">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [78]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"process"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="s2">"analyze"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"analyze"</span><span class="p">,</span> <span class="s2">"generate"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"generate"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[78]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;langgraph.graph.state.StateGraph at 0x15a3b998740&gt;</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d4952662">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [79]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">compiled_graph</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">node2</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"무엇을 도와드릴까요?"</span><span class="p">],</span>
+        <span class="s2">"processing_log"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"응답 생성 완료"</span><span class="p">]</span>
+    <span class="p">}</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=41bde556">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3bff3761">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84">상태 스키마 설계<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84">¶</a></h3><ul>
+<li>상태 스키마는 LangGraph에서 데이터 흐름의 청사진</li>
+<li>절한 스키마 설계는 시스템의 안정성과 유지보수성을 크게 향상</li>
+</ul>
+<br/>
+<h4 id="TypedDict-(%EA%B6%8C%EC%9E%A5)"><code>TypedDict</code> (권장)<a class="anchor-link" href="#TypedDict-(%EA%B6%8C%EC%9E%A5)">¶</a></h4><ul>
+<li>가장 일반적이고 권장되는 방법</li>
+<li><strong>장점</strong>:<ul>
+<li>가볍고 빠른 성능</li>
+<li>Python 표준 라이브러리만 사용</li>
+<li>LangGraph의 기본 스키마 방식</li>
+<li>런타임 오버헤드 없음</li>
+</ul>
+</li>
+<li><strong>단점</strong>:<ul>
+<li>런타임 유효성 검사 없음</li>
+<li>기본값 설정이 불편함</li>
+<li><strong><code>NotRequired</code>로 선택적 필드 정의</strong></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8e39daf3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">NotRequired</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=64bb956d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>                          <span class="c1"># 필수 필드</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>  <span class="c1"># 필수 (리듀서 적용)</span>
+    <span class="n">count</span><span class="p">:</span> <span class="n">NotRequired</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>             <span class="c1"># 선택적 필드 (노드에서 생략 가능)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f7c51229">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="dataclass"><code>dataclass</code><a class="anchor-link" href="#dataclass">¶</a></h4><ul>
+<li><p><strong>장점</strong>:</p>
+<ul>
+<li>기본값 설정이 쉬움</li>
+<li>자동 <code>init</code>, <code>repr</code> 생성</li>
+<li>TypedDict와 유사한 성능</li>
+</ul>
+</li>
+<li><p><strong>단점</strong>:</p>
+<ul>
+<li>런타임 유효성 검사 없음</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7191a1fe">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e195d3fb">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">:</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=155ed532">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="Pydantic-BaseModel"><code>Pydantic BaseModel</code><a class="anchor-link" href="#Pydantic-BaseModel">¶</a></h4><ul>
+<li>엄격한 데이터 검증이 필요할 때 사용</li>
+<li><strong>장점</strong><ul>
+<li>런타임 데이터 검증</li>
+<li>풍부한 유효성 검사 옵션</li>
+<li>자동 타입 변환</li>
+</ul>
+</li>
+<li><strong>단점</strong><ul>
+<li><code>TypedDict</code>보다 느림 (검증 오버헤드)</li>
+<li>추가 의존성 필요</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6337a4a0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1b51a86d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 0 이상만 허용</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4c19a35f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84-%EC%84%A0%ED%83%9D-%EA%B0%80%EC%9D%B4%EB%93%9C">상태 스키마 설계 선택 가이드<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84-%EC%84%A0%ED%83%9D-%EA%B0%80%EC%9D%B4%EB%93%9C">¶</a></h4><table>
+<thead>
+<tr>
+<th>상황</th>
+<th>추천 방법</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>일반적인 경우</td>
+<td>TypedDict</td>
+</tr>
+<tr>
+<td>기본값 필요</td>
+<td>dataclass</td>
+</tr>
+<tr>
+<td>엄격한 검증 필요</td>
+<td>Pydantic</td>
+</tr>
+<tr>
+<td>고성능 필요</td>
+<td>TypedDict</td>
+</tr>
+<tr>
+<td>필드별 선택 여부 구분</td>
+<td>TypedDict + NotRequired</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=01da0169">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84-%EC%9B%90%EC%B9%99">스키마 설계 원칙<a class="anchor-link" href="#%EC%8A%A4%ED%82%A4%EB%A7%88-%EC%84%A4%EA%B3%84-%EC%9B%90%EC%B9%99">¶</a></h3><br/>
+<h4 id="%EB%AA%85%ED%99%95%EC%84%B1-%EC%9B%90%EC%B9%99">명확성 원칙<a class="anchor-link" href="#%EB%AA%85%ED%99%95%EC%84%B1-%EC%9B%90%EC%B9%99">¶</a></h4><ul>
+<li><p><strong>각 필드의 목적과 사용법이 명확하게</strong></p>
+<ul>
+<li>의미 있는 필드명 사용: <code>data</code> -&gt; <code>user_profile</code></li>
+<li>타입 힌팅 활용: <code>messages: list -&gt; messages: List[str]</code></li>
+<li>문서화 추가: <code>docstring</code>이나 주석으로 각 필드 설명</li>
+</ul>
+</li>
+</ul>
+<br/>
+<h4 id="%EC%BA%A1%EC%8A%90%ED%99%94-%EC%9B%90%EC%B9%99">캡슐화 원칙<a class="anchor-link" href="#%EC%BA%A1%EC%8A%90%ED%99%94-%EC%9B%90%EC%B9%99">¶</a></h4><ul>
+<li><strong>내부 처리용 데이터와 외부 인터페이스를 구분</strong></li>
+<li>LangGraph에서는 입력/출력 스키마를 분리하여 내부 구현을 숨기고 명확한 인터페이스를 제공</li>
+</ul>
+<br/>
+<h4 id="%EB%8B%A8%EC%9D%BC-%EC%B1%85%EC%9E%84-%EC%9B%90%EC%B9%99">단일 책임 원칙<a class="anchor-link" href="#%EB%8B%A8%EC%9D%BC-%EC%B1%85%EC%9E%84-%EC%9B%90%EC%B9%99">¶</a></h4><ul>
+<li><strong>각 상태 스키마는 하나의 명확한 목적을 가져야 함. 하나의 스키마가 너무 많은 책임을 가지면 복잡도가 증가하고 변경이 어려움</strong></li>
+</ul>
+<br/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ac51b854">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88%EC%9D%98-%EC%9C%A0%ED%98%95">상태 스키마의 유형<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%8A%A4%ED%82%A4%EB%A7%88%EC%9D%98-%EC%9C%A0%ED%98%95">¶</a></h3><br/>
+<h4 id="%EA%B8%B0%EB%B3%B8-%EC%8A%A4%ED%82%A4%EB%A7%88-(Single-Schema)">기본 스키마 (Single Schema)<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EC%8A%A4%ED%82%A4%EB%A7%88-(Single-Schema)">¶</a></h4><ul>
+<li><strong>입력과 출력이 동일한 단일 스키마를 사용하는 가장 기본적인 형태</strong><ul>
+<li>간단한 챗봇이나 Q&amp;A 시스템</li>
+<li>상태가 복잡하지 않은 선형적 워크플로우</li>
+<li>프로토타이핑이나 학습 목적</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a4d445ef">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">add</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=68f68383">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BasicState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">user_input</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">ai_response</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">conversation_history</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">add</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d127ba3e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">chatbot_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">BasicState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'user_input'</span><span class="p">]</span><span class="si">}</span><span class="s2">'에 대한 응답입니다."</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"ai_response"</span><span class="p">:</span> <span class="n">response</span><span class="p">,</span>
+        <span class="s2">"conversation_history"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"User: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'user_input'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"AI: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=08d40b32">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EB%AA%85%EC%8B%9C%EC%A0%81-%EC%9E%85%EC%B6%9C%EB%A0%A5-%EC%8A%A4%ED%82%A4%EB%A7%88-(Explicit-Input/Output-Schema)">명시적 입출력 스키마 (Explicit Input/Output Schema)<a class="anchor-link" href="#%EB%AA%85%EC%8B%9C%EC%A0%81-%EC%9E%85%EC%B6%9C%EB%A0%A5-%EC%8A%A4%ED%82%A4%EB%A7%88-(Explicit-Input/Output-Schema)">¶</a></h4><ul>
+<li><strong>입력과 출력을 별도로 정의하여 인터페이스를 명확하게 제어</strong><ul>
+<li>API 같은 명확한 인터페이스가 필요한 경우</li>
+<li>외부 시스템과 연동할 때</li>
+<li>내부 처리 과정을 숨기고 싶을 때</li>
+</ul>
+</li>
+</ul>
+<br/>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=5129e172">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">InputState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>
+    
+<span class="k">class</span><span class="w"> </span><span class="nc">OutputState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">answer</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OverallState</span><span class="p">(</span><span class="n">InputState</span><span class="p">,</span> <span class="n">OutputState</span><span class="p">):</span>
+    <span class="n">intermediate_data</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">search_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=afe4ed15">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">search_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">InputState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"search_results"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"결과1"</span><span class="p">,</span> <span class="s2">"결과2"</span><span class="p">],</span>
+        <span class="s2">"intermediate_data"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'question'</span><span class="p">]</span><span class="si">}</span><span class="s2">' 검색 완료"</span>
+    <span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">answer_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputState</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"answer"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"검색 결과: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'search_results'</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e66cdd70">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>실행</li>
+<li>StateGraph 설정</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b9c9e030">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=09cbf8b6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [80]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">compiled_graph</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span>
-    <span class="s2">"total_tokens"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="s2">"max_score"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="s2">"recent_actions"</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="s2">"current_status"</span><span class="p">:</span> <span class="s2">"idle"</span>
-<span class="p">})</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">builder</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span>
+   <span class="n">OverallState</span><span class="p">,</span>
+   <span class="n">input_schema</span><span class="o">=</span><span class="n">InputState</span><span class="p">,</span>
+   <span class="n">output_schema</span><span class="o">=</span><span class="n">OutputState</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d29efbb0">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d2e152af">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EB%8B%A4%EC%A4%91-%EC%8A%A4%ED%82%A4%EB%A7%88-+-PrivateState">다중 스키마 + PrivateState<a class="anchor-link" href="#%EB%8B%A4%EC%A4%91-%EC%8A%A4%ED%82%A4%EB%A7%88-+-PrivateState">¶</a></h4><ul>
+<li><strong>내부 노드 간 통신을 위한 private 스키마를 포함하는 복잡한 구조</strong><ul>
+<li>RAG 파이프라인</li>
+<li>다단계 처리가 필요한 복잡한 시스템</li>
+<li>각 단계별로 다른 데이터 구조가 필요한 경우</li>
+</ul>
+</li>
+<li><strong>노드는 그래프 초기화 시 정의되지 않은 새로운 상태 채널(PrivateState의 필드)을 추가할 수 있음 $\rightarrow$ 이를 통해 내부 처리 데이터를 외부에 노출하지 않으면서 노드 간에 전달할 수 있음</strong></li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=76750e0c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [81]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [42]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"=== 최종 상태 ==="</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"총 토큰 수: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'total_tokens'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># 650 (150+200+300)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최고 점수: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'max_score'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>      <span class="c1"># 0.92 (최대값)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최근 액션: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'recent_actions'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># 최근 5개</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"현재 상태: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'current_status'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># "completed"</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OverallState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">answer</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PrivateState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">internal_score</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">debug_info</span><span class="p">:</span> <span class="nb">str</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=81d4b248">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>=== 최종 상태 ===
-총 토큰 수: 650
-최고 점수: 0.92
-최근 액션: ['input_received', 'analysis_started', 'analysis_completed', 'response_generated']
-현재 상태: completed
-</pre>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [43]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">internal_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrivateState</span><span class="p">:</span>
+    <span class="c1"># 노드는 OverallState에 정의되지 않은 필드도 반환 가능</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"internal_score"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+        <span class="s2">"debug_info"</span><span class="p">:</span> <span class="s2">"내부 처리 완료"</span>
+    <span class="p">}</span>
+</pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3146454e">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=51309b40">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>

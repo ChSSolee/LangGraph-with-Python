@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>01-05. Node (동기 &amp; 비동기)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>08. Graph Complie &amp; Invoke (동기, 스트림, 비동기)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,21 +7511,77 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ba61b20d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=49f24545">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="%EB%85%B8%EB%93%9C-(Node)">노드 (Node)<a class="anchor-link" href="#%EB%85%B8%EB%93%9C-(Node)">¶</a></h3><ul>
-<li>노드(Node)는 실제 작업을 수행하는 핵심 단위</li>
-<li><strong>노드는 Python 함수로 구현되며, 현재 상태를 입력받아 처리하고 업데이트된 상태를 반환</strong></li>
+<h2 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%97%B0%EA%B2%B0(%EC%BB%B4%ED%8C%8C%EC%9D%BC)-%EB%B0%8F-%EC%8B%A4%ED%96%89">그래프 연결(컴파일) 및 실행<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%97%B0%EA%B2%B0(%EC%BB%B4%ED%8C%8C%EC%9D%BC)-%EB%B0%8F-%EC%8B%A4%ED%96%89">¶</a></h2><br/>
+<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%A0%95%EC%9D%98">그래프 정의<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%A0%95%EC%9D%98">¶</a></h3><ul>
+<li><code>StateGraph</code> 객체 생성 : 상태 기반의 계산 그래프를 정의</li>
 </ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">MyState</span><span class="p">)</span>
+</pre></div>
+<br/>
+<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%B4%ED%8C%8C%EC%9D%BC">그래프 컴파일<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%B4%ED%8C%8C%EC%9D%BC">¶</a></h3><ul>
+<li><code>compile()</code> 메서드는 정의된 그래프를 실행 가능한 형태로 변환<ul>
+<li>이 과정에서 그래프의 구조가 검증되고, 최적화</li>
+<li>컴파일된 그래프는 <code>app</code>변수에 저장되며, 실행할 준비가 된 상태</li>
+</ul>
+</li>
+</ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+</pre></div>
+<br/>
+<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89">그래프 실행<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89">¶</a></h3><ul>
+<li><code>invoke()</code>메서드는 컴파일된 그래프를 실행<ul>
+<li>랭체인에서 사용하는 문법 구조를 그대로 준용</li>
+</ul>
+</li>
+<li>인자로 전달된 초기 상태는, 상태 클래스의 구조와 일치해야 함</li>
+<li>그래프는 초기 상태부터 시작하여 정의된 노드들을 순차적으로 실행</li>
+</ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+</pre></div>
+<br/>
+<h3 id="%EA%B2%B0%EA%B3%BC-%EC%B6%9C%EB%A0%A5">결과 출력<a class="anchor-link" href="#%EA%B2%B0%EA%B3%BC-%EC%B6%9C%EB%A0%A5">¶</a></h3><ul>
+<li>그래프 실행의 결과를 출력</li>
+</ul>
+<br/>
+<h4 id="%EC%A3%BC%EC%9A%94-%EA%B3%BC%EC%A0%95">주요 과정<a class="anchor-link" href="#%EC%A3%BC%EC%9A%94-%EA%B3%BC%EC%A0%95">¶</a></h4><ol>
+<li><strong>상태 기반 계산</strong> : LangGraph는 상태를 중심으로 동작. 각 노드는 현재 상태를 입력으로 받아 새로운 상태를 출력</li>
+<li><strong>그래프 구조</strong> : 노드와 엣지로 구성된 그래프 구조를 통해 복잡한 워크플로우를 모델링</li>
+<li><strong>컴파일 과정</strong> : 컴파일은 정의된 그래프를 효율적으로 실행할 수 있는 형태로 변환. 이 과정에서 그래프의 일관성 검사도 이루어 짐</li>
+<li><strong>실행 흐름</strong> : 그래프 실행은 초기 상태에서 시작하여 정의된 노드들을 순차적으로 처리하며, 각 노드는 상태를 업데이트 함</li>
+</ol>
 <br/>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9977513b">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=22762f12">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C-%EC%97%B0%EA%B2%B0">그래프 구성 요소 연결<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C-%EC%97%B0%EA%B2%B0">¶</a></h3><ul>
+<li>그래프 구성 요소 연결은 LangGraph 애플리케이션의 아키텍처 품질을 결정하는 핵심 과정<ul>
+<li>그래프 구성은 단순히 노드와 엣지를 연결하는 것을 넘어서, <strong>비즈니스 로직의 흐름을 명확하게 표현하고 예외 상황을 적절하게 처리하며 시스템의 안정성과 확장성을 보장하는 종합적인 설계 과정</strong></li>
+</ul>
+</li>
+<li><strong>그래프 구성의 핵심 원칙은 책임 분리(Separation of Concerns)</strong> 에 있습니다. 각 노드는 명확하고 단일한 책임을 가져야 하며, 상태의 특정 측면만을 업데이트</li>
+</ul>
+<br/>
+<h4 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%98%88%EC%8B%9C">그래프 구성 예시<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%98%88%EC%8B%9C">¶</a></h4>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=92a97da9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7535,343 +7591,17 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=aac8ce4b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">State</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">counter</span><span class="p">:</span> <span class="nb">int</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=53725663">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">increment</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="s2">"counter"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=768668a8">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">State</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"increment"</span><span class="p">,</span> <span class="n">increment</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"increment"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"increment"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;langgraph.graph.state.StateGraph at 0x1f20cab09b0&gt;</pre>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dbdecad3">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{'counter': 1}
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f628a7d7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98">노드 함수 시그니처<a class="anchor-link" href="#%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98">¶</a></h3><br/>
-<h4 id="%EA%B8%B0%EB%B3%B8-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state%EB%A7%8C)">기본 시그니처 (state만)<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state%EB%A7%8C)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f4e00234">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">simple_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"key"</span><span class="p">:</span> <span class="s2">"value"</span><span class="p">}</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualize_graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualize_graph</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=999543ea">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%ED%99%95%EC%9E%A5-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state-+-config)">확장 시그니처 (state + config)<a class="anchor-link" href="#%ED%99%95%EC%9E%A5-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state-+-config)">¶</a></h4><ul>
-<li>설정 정보가 필요할 때 <code>RunnableConfig</code>를 추가</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f71afc07">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableConfig</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=4b4a6438">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">node_with_config</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="c1"># config에서 thread_id, tags 등 접근 가능</span>
-    <span class="n">thread_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configurable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thread_id"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Thread ID: </span><span class="si">{</span><span class="n">thread_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"processed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4fe69041">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EC%A0%84%EC%B2%B4-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state-+-config-+-runtime)">전체 시그니처 (state + config + runtime)<a class="anchor-link" href="#%EC%A0%84%EC%B2%B4-%EC%8B%9C%EA%B7%B8%EB%8B%88%EC%B2%98-(state-+-config-+-runtime)">¶</a></h4><ul>
-<li><strong>스토어나 스트림 기능이 필요할 때 <code>Runtime</code> 객체를 추가</strong></li>
-</ul>
-<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runtime</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">node_with_runtime</span><span class="p">(</span>
-    <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">store</span><span class="p">:</span> <span class="n">BaseStore</span><span class="p">,</span>
-    <span class="n">stream_writer</span><span class="p">:</span> <span class="n">StreamWriter</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="c1"># store: 장기 메모리 저장소 접근</span>
-    <span class="c1"># stream_writer: 커스텀 스트리밍 출력</span>
-    <span class="n">stream_writer</span><span class="p">({</span><span class="s2">"progress"</span><span class="p">:</span> <span class="s2">"50%"</span><span class="p">})</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"done"</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bfae7762">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%8F%99%EA%B8%B0-vs-%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">동기 vs 비동기 노드<a class="anchor-link" href="#%EB%8F%99%EA%B8%B0-vs-%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">¶</a></h3><br/>
-<h4 id="%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">동기 노드<a class="anchor-link" href="#%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">¶</a></h4><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">sync_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="c1"># 동기적으로 실행</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">some_computation</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"data"</span><span class="p">])</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"result"</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c7695e09">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">비동기 노드<a class="anchor-link" href="#%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li><strong>I/O 바운드 작업에 적합</strong></li>
-<li>비동기 노드 사용 시 <code>ainvoke()</code> 또는 <code>astream()</code>으로 실행</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="c1"># 비동기 API 호출 등</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">async_api_call</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"query"</span><span class="p">])</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"response"</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"query"</span><span class="p">:</span> <span class="s2">"검색어"</span><span class="p">})</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a044213b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%85%B8%EB%93%9C-%EC%B6%94%EA%B0%80-%EB%B0%A9%EB%B2%95">노드 추가 방법<a class="anchor-link" href="#%EB%85%B8%EB%93%9C-%EC%B6%94%EA%B0%80-%EB%B0%A9%EB%B2%95">¶</a></h3><br/>
-<h4 id="%ED%95%A8%EC%88%98%EB%A1%9C-%EC%B6%94%EA%B0%80">함수로 추가<a class="anchor-link" href="#%ED%95%A8%EC%88%98%EB%A1%9C-%EC%B6%94%EA%B0%80">¶</a></h4><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">my_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"key"</span><span class="p">:</span> <span class="s2">"value"</span><span class="p">}</span>
-
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"my_node"</span><span class="p">,</span> <span class="n">my_node</span><span class="p">)</span>
-</pre></div>
-<br/>
-<h4 id="%EC%9D%B4%EB%A6%84-%EC%83%9D%EB%9E%B5-%EC%8B%9C">이름 생략 시<a class="anchor-link" href="#%EC%9D%B4%EB%A6%84-%EC%83%9D%EB%9E%B5-%EC%8B%9C">¶</a></h4><ul>
-<li>함수 이름이 노드 이름으로 자동 지정</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">my_node</span><span class="p">)</span>  <span class="c1"># 노드 이름: "my_node"</span>
-</pre></div>
-<br/>
-<h4 id="Runnable-%EC%B6%94%EA%B0%80"><code>Runnable</code> 추가<a class="anchor-link" href="#Runnable-%EC%B6%94%EA%B0%80">¶</a></h4><ul>
-<li>LangChain의 <code>Runnable</code> 객체도 노드로 추가 가능</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span>
-
-<span class="n">llm</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"llm"</span><span class="p">,</span> <span class="n">llm</span><span class="p">)</span>
-</pre></div>
-<br/>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=94ae864c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="%ED%8A%B9%EC%88%98-%EB%85%B8%EB%93%9C">특수 노드<a class="anchor-link" href="#%ED%8A%B9%EC%88%98-%EB%85%B8%EB%93%9C">¶</a></h3><br/>
-<h4 id="START-%EB%85%B8%EB%93%9C">START 노드<a class="anchor-link" href="#START-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li>그래프의 진입점</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">START</span>
-
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"first_node"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3e950f6d">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="END-%EB%85%B8%EB%93%9C">END 노드<a class="anchor-link" href="#END-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li>그래프의 종료점</li>
-</ul>
-<div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">END</span>
-
-<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"last_node"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=11cb1c21">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EA%B8%B0%EB%B3%B8-%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%A1%B0">기본 노드 구조<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%A1%B0">¶</a></h4><ul>
-<li>함수 기반: Python 함수로 구현</li>
-<li>상태 중심: 현재 상태를 입력으로 받아 처리</li>
-<li>독립적 실행: 각 노드는 독립적으로 실행 가능</li>
-<li>조합 가능: 여러 노드를 연결하여 복잡한 워크플로우 구성</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d7217129">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=294c3411">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aaa6a728">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7883,65 +7613,135 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0de660ef">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=414c4858">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">State</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">counter</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WorkflowState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">processing_stage</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">]</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=97285d7b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5026dfa6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>기본 노드 함수</li>
+<li>노드 함수 정의</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c4c1fb09">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3e563c5f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">increment</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    가장 간단한 형태의 노드</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_input</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""입력 검증 노드"""</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input_data"</span><span class="p">]</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        state: 현재 그래프 상태</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">input_data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"입력 데이터가 비어있습니다"</span><span class="p">,</span>
+            <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validation_failed"</span>
+        <span class="p">}</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        업데이트할 상태 딕셔너리</span>
-<span class="sd">    """</span>
-    <span class="c1"># 현재 카운터 값 가져오기</span>
-    <span class="n">current_counter</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"counter"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"입력 데이터가 너무 깁니다"</span><span class="p">,</span>
+            <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validation_failed"</span>
+        <span class="p">}</span>
 
-    <span class="c1"># 비즈니스 로직 수행</span>
-    <span class="n">new_counter</span> <span class="o">=</span> <span class="n">current_counter</span> <span class="o">+</span> <span class="mi">1</span>
-
-    <span class="c1"># 상태 업데이트 반환</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"counter"</span><span class="p">:</span> <span class="n">new_counter</span><span class="p">,</span>
-        <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"카운터가 </span><span class="si">{</span><span class="n">new_counter</span><span class="si">}</span><span class="s2">로 증가했습니다."</span><span class="p">],</span>
-        <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"incremented"</span>
+        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validated"</span><span class="p">,</span>
+        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"입력 검증 완료"</span><span class="p">]</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=62379ae0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_data</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""데이터 처리 노드"""</span>
+    <span class="c1"># 실제 처리 로직</span>
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input_data"</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"processed"</span><span class="p">,</span>
+        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"처리 결과: </span><span class="si">{</span><span class="n">processed</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span>
+        <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="p">{}),</span>
+            <span class="s2">"processed_at"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c19e20a0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_output</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""출력 생성 노드"""</span>
+    <span class="n">final_output</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"results"</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"completed"</span><span class="p">,</span>
+        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"최종 출력: </span><span class="si">{</span><span class="n">final_output</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span>
+        <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">state</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">],</span>
+            <span class="s2">"completed_at"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=306b9ae7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">handle_error</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""에러 처리 노드"""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"error_handled"</span><span class="p">,</span>
+        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"에러 처리: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
     <span class="p">}</span>
 </pre></div>
 </div>
@@ -7949,28 +7749,95 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f97ea5ff">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=efaba114">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li>그래프 생성 및 노드 추가</li>
+<li>라우팅 함수</li>
 </ul>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=870901b6">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=15d95587">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">State</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"increment"</span><span class="p">,</span> <span class="n">increment</span><span class="p">)</span>  <span class="c1"># 노드 이름과 함수 매핑</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">route_after_validation</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""검증 후 라우팅"""</span>
+    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"error"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"error"</span>
+    <span class="k">return</span> <span class="s2">"process"</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4252abcf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ul>
+<li>그래프 구성</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e35de26c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">workflow</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">WorkflowState</span><span class="p">)</span>
+
+<span class="c1"># 노드 추가</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"validate"</span><span class="p">,</span> <span class="n">validate_input</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="n">process_data</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"output"</span><span class="p">,</span> <span class="n">generate_output</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"error_handler"</span><span class="p">,</span> <span class="n">handle_error</span><span class="p">)</span>
+
+<span class="c1"># 엣지 추가</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"validate"</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_conditional_edges</span><span class="p">(</span>
+    <span class="s2">"validate"</span><span class="p">,</span>
+    <span class="n">route_after_validation</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="s2">"process"</span><span class="p">:</span> <span class="s2">"process"</span><span class="p">,</span>
+        <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"error_handler"</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"output"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"error_handler"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+
+<span class="c1"># 그래프 컴파일</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=440e4ab1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">visualize_graph</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7980,1180 +7847,201 @@ a.anchor-link {
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[22]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>&lt;langgraph.graph.state.StateGraph at 0x1f20cb287a0&gt;</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedImage jp-OutputArea-output" tabindex="0">
+<img alt="No description has been provided for this image" class="" src="data:image/png;base64,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"/>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b240a424">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e12d9e02">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h4 id="%EB%85%B8%EB%93%9C%EC%9D%98-%EC%9E%85%EC%B6%9C%EB%A0%A5-%ED%8C%A8%ED%84%B4">노드의 입출력 패턴<a class="anchor-link" href="#%EB%85%B8%EB%93%9C%EC%9D%98-%EC%9E%85%EC%B6%9C%EB%A0%A5-%ED%8C%A8%ED%84%B4">¶</a></h4>
+<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95-(invoke,-stream,-async)">그래프 실행 방법 (<code>invoke</code>, <code>stream</code>, <code>async</code>)<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95-(invoke,-stream,-async)">¶</a></h3>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fe704587">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=28a123bb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">standard_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    표준 노드 패턴</span>
-
-<span class="sd">    입력: 전체 상태</span>
-<span class="sd">    출력: 업데이트할 필드만 포함한 딕셔너리</span>
-<span class="sd">    """</span>
-    <span class="c1"># 1. 상태에서 필요한 데이터 추출</span>
-    <span class="n">input_data</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_field"</span><span class="p">,</span> <span class="s2">"default_value"</span><span class="p">)</span>
-
-    <span class="c1"># 2. 처리 로직 수행</span>
-    <span class="n">processed_data</span> <span class="o">=</span> <span class="n">process_data</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-
-    <span class="c1"># 3. 업데이트할 필드만 반환</span>
-    <span class="c1"># 반환하지 않은 필드는 그대로 유지됨</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"output_field"</span><span class="p">:</span> <span class="n">processed_data</span><span class="p">,</span>
-        <span class="s2">"processed"</span><span class="p">:</span> <span class="kc">True</span>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<table>
+<thead>
+<tr>
+<th>메서드</th>
+<th>설명</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>invoke()</code></td>
+<td>동기 실행, 최종 결과 반환</td>
+<td>배치 처리, 테스트</td>
+</tr>
+<tr>
+<td><code>stream()</code></td>
+<td>동기 스트리밍, 중간 결과 반환</td>
+<td>실시간 UI</td>
+</tr>
+<tr>
+<td><code>ainvoke()</code></td>
+<td>비동기 실행</td>
+<td>고동시성 서버</td>
+</tr>
+<tr>
+<td><code>astream()</code></td>
+<td>비동기 스트리밍</td>
+<td>비동기 실시간 UI</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f07c98ef">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89-:-invoke">동기 실행 : <code>invoke</code><a class="anchor-link" href="#%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89-:-invoke">¶</a></h3><ul>
+<li>전체 그래프 실행이 완료될 떄까지 대기</li>
+</ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[]})</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최종 상태: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+<br/>
+<h4 id="%EC%84%A4%EC%A0%95-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98">설정 매개변수<a class="anchor-link" href="#%EC%84%A4%EC%A0%95-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98">¶</a></h4><br/>
+<div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"configurable"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"thread_id"</span><span class="p">:</span> <span class="s2">"user_123"</span>   <span class="c1"># 세션 식별자</span>
     <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8ed5db55">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""데이터 처리 로직"""</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Processed: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a915a8b8">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EB%85%B8%EB%93%9C%EC%9D%98-%EC%97%AD%ED%95%A0%EA%B3%BC-%EC%B1%85%EC%9E%84">노드의 역할과 책임<a class="anchor-link" href="#%EB%85%B8%EB%93%9C%EC%9D%98-%EC%97%AD%ED%95%A0%EA%B3%BC-%EC%B1%85%EC%9E%84">¶</a></h3><ul>
-<li><p>노드의 가장 중요한 특징은 상태 중심 설계</p>
-<ul>
-<li>모든 노드는 공통된 상태 스키마를 통해 데이터를 주고받으며, 이를 통해 복잡한 워크플로우에서도 일관성 있는 데이터 흐름을 보장할 수 있음</li>
-<li>각 노드는 상태의 일부 또는 전체를 읽어들이고, 필요한 처리를 수행한 후, 업데이트된 상태를 반환</li>
-</ul>
-</li>
-<li><p>노드의 주요 책임 3가지</p>
-<ul>
-<li><strong>데이터 변환 및 처리</strong> : 원시 데이터를 구조화하거나, 복잡한 계산을 수행하거나, 외부 API와의 통신을 담당</li>
-<li><strong>상태 관리</strong> : 애플리케이션의 현재 상태를 읽고, 필요한 변경사항을 적용하며, 다음 단계로 전달할 정보를 준비</li>
-<li><strong>흐름 제어</strong> : 조건부 로직을 통해 다음에 실행될 노드를 결정하거나, 특정 조건에서 그래프의 실행을 종료시킬 수 있음</li>
-</ul>
-</li>
-<li><p>LangGraph의 노드는 모듈성과 재사용성을 강조</p>
-<ul>
-<li>각 노드는 명확한 입력과 출력을 가진 독립적인 단위로 설계되어, 다른 그래프나 워크플로우에서도 쉽게 재사용할 수 있음</li>
-<li>타입 안전성을 제공하여 <code>TypedDict</code>를 활용한 상태 스키마를 통해 컴파일 시점에서 많은 오류를 방지할 수 있음</li>
-</ul>
-</li>
-<li><p>상태 업데이트 방식에서도 유연성을 제공</p>
-<ul>
-<li>기본적인 덮어쓰기 방식 외에도, 리듀서(reducer)를 사용하여 복잡한 상태 병합 로직을 구현 가능</li>
-<li>예) <code>Annotated[list, operator.add]</code>와 같은 어노테이션을 통해 리스트에 새 항목을 추가하거나, 사용자 정의 리듀서 함수를 통해 특별한 병합 규칙을 적용 가능</li>
-</ul>
-</li>
-<li><p>서브그래프와 <code>Private State</code> 개념을 통해 더욱 복잡한 아키텍처도 지원</p>
-<ul>
-<li><strong>서브그래프는 독립적인 상태를 가지면서도 부모 그래프와 필요한 정보만을 공유할 수 있어, 대규모 멀티 에이전트 시스템이나 복잡한 워크플로우를 효과적으로 관리</strong></li>
-</ul>
-</li>
-<li><p>노드는 또한 에러 처리와 복구에도 역할</p>
-<ul>
-<li>각 노드에서 발생할 수 있는 예외 상황을 적절히 처리하고, 필요에 따라 재시도 로직이나 대안 경로를 제공할 수 있음</li>
-</ul>
-<p>$\rightarrow$ 전체 시스템의 안정성과 신뢰성 향상</p>
-</li>
-<li><p>노드는 성능 최적화의 핵심 단위</p>
-<ul>
-<li>각 노드의 실행 시간을 모니터링하고, 병목 지점을 식별하여 최적화할 수 있으며, 필요에 따라 병렬 처리나 캐싱 등의 기법을 적용 가능</li>
-</ul>
-<p>$\rightarrow$ LangGraph의 노드는 확장 가능하고 유지보수가 용이한 AI 애플리케이션 개발의 기반을 제공</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=91752d4b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EC%83%81%ED%83%9C-%EC%B2%98%EB%A6%AC-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98(State-Processing)">상태 처리 노드 함수(State Processing)<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%B2%98%EB%A6%AC-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98(State-Processing)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e7b1611f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DataState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">raw_data</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">processed_data</span><span class="p">:</span> <span class="nb">dict</span>
-    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e22d264e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">data_processor_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">DataState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    상태 처리 노드</span>
-<span class="sd">    원시 데이터를 받아 구조화된 데이터로 변환</span>
-<span class="sd">    """</span>
-    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"raw_data"</span><span class="p">]</span>
-
-    <span class="c1"># 데이터 파싱</span>
-    <span class="n">lines</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
-
-    <span class="c1"># 구조화</span>
-    <span class="n">processed</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"total_lines"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span>
-        <span class="s2">"content"</span><span class="p">:</span> <span class="n">lines</span><span class="p">,</span>
-        <span class="s2">"first_line"</span><span class="p">:</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">lines</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
-        <span class="s2">"last_line"</span><span class="p">:</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">lines</span> <span class="k">else</span> <span class="s2">""</span>
-    <span class="p">}</span>
-
-    <span class="c1"># 메타데이터 생성</span>
-    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"processed_at"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
-        <span class="s2">"processor_version"</span><span class="p">:</span> <span class="s2">"1.0.0"</span><span class="p">,</span>
-        <span class="s2">"data_size"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_data</span><span class="p">)</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"processed_data"</span><span class="p">:</span> <span class="n">processed</span><span class="p">,</span>
-        <span class="s2">"metadata"</span><span class="p">:</span> <span class="n">metadata</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=48fb0525">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EB%A1%9C%EC%A7%81-%EC%8B%A4%ED%96%89-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-(Business-Logic-Execution)">비즈니스 로직 실행 노드 함수 (Business Logic Execution)<a class="anchor-link" href="#%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4-%EB%A1%9C%EC%A7%81-%EC%8B%A4%ED%96%89-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-(Business-Logic-Execution)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=2d450af6">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CalculationState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">numbers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
-    <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">result</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=345920ed">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">calculator_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">CalculationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    비즈니스 로직 실행 노드</span>
-<span class="sd">    수학 연산을 수행하고 결과를 저장</span>
-<span class="sd">    """</span>
-    <span class="n">numbers</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"numbers"</span><span class="p">]</span>
-    <span class="n">operation</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"operation"</span><span class="p">]</span>
-
-    <span class="c1"># 연산 수행</span>
-    <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">"multiply"</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">*=</span> <span class="n">num</span>
-    <span class="k">elif</span> <span class="n">operation</span> <span class="o">==</span> <span class="s2">"average"</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">numbers</span><span class="p">)</span> <span class="k">if</span> <span class="n">numbers</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown operation: </span><span class="si">{</span><span class="n">operation</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="c1"># 히스토리 업데이트</span>
-    <span class="n">history_entry</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"operation"</span><span class="p">:</span> <span class="n">operation</span><span class="p">,</span>
-        <span class="s2">"inputs"</span><span class="p">:</span> <span class="n">numbers</span><span class="p">,</span>
-        <span class="s2">"result"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-        <span class="s2">"timestamp"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
-    <span class="p">}</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"result"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-        <span class="s2">"history"</span><span class="p">:</span> <span class="p">[</span><span class="n">history_entry</span><span class="p">]</span>  <span class="c1"># 리듀서가 있다면 누적됨</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2afdce0f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-(State-Updates)">상태 업데이트 노드 함수 (State Updates)<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EC%97%85%EB%8D%B0%EC%9D%B4%ED%8A%B8-%EB%85%B8%EB%93%9C-%ED%95%A8%EC%88%98-(State-Updates)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3c30e7d5">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6b0b25ce">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">UpdateState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">counter</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">items</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">]</span>  <span class="c1"># 리듀서 적용</span>
-    <span class="n">flags</span><span class="p">:</span> <span class="nb">dict</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=92e3e9b3">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">update_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">UpdateState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    상태 업데이트 노드</span>
-<span class="sd">    다양한 업데이트 패턴 시연</span>
-<span class="sd">    """</span>
-    <span class="c1"># 1. 단순 덮어쓰기</span>
-    <span class="n">new_counter</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"counter"</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
-
-    <span class="c1"># 2. 리스트에 추가 (리듀서 활용)</span>
-    <span class="n">new_items</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"new_item"</span><span class="p">]</span>
-
-    <span class="c1"># 3. 딕셔너리 부분 업데이트</span>
-    <span class="n">updated_flags</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"flags"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">updated_flags</span><span class="p">[</span><span class="s2">"processed"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">updated_flags</span><span class="p">[</span><span class="s2">"node_name"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"update_node"</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"counter"</span><span class="p">:</span> <span class="n">new_counter</span><span class="p">,</span>      <span class="c1"># 덮어쓰기</span>
-        <span class="s2">"items"</span><span class="p">:</span> <span class="n">new_items</span><span class="p">,</span>          <span class="c1"># 리듀서로 추가</span>
-        <span class="s2">"flags"</span><span class="p">:</span> <span class="n">updated_flags</span>       <span class="c1"># 전체 교체</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=78d49403">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%85%B8%EB%93%9C-%ED%83%80%EC%9E%85%EA%B3%BC-%ED%8C%A8%ED%84%B4">노드 타입과 패턴<a class="anchor-link" href="#%EB%85%B8%EB%93%9C-%ED%83%80%EC%9E%85%EA%B3%BC-%ED%8C%A8%ED%84%B4">¶</a></h3><ul>
-<li>노드의 타입은 주로 실행 방식과 처리 패턴에 따라 구분되며, 이는 애플리케이션의 성능과 구조에 큰 영향</li>
+<h4 id="%EC%9E%AC%EA%B7%80-%EC%A0%9C%ED%95%9C-%EC%84%A4%EC%A0%95">재귀 제한 설정<a class="anchor-link" href="#%EC%9E%AC%EA%B7%80-%EC%A0%9C%ED%95%9C-%EC%84%A4%EC%A0%95">¶</a></h4><ul>
+<li>무한 루프 방지</li>
 </ul>
 <br/>
-<h4 id="%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C-(Sync-Node)">동기 노드 (Sync Node)<a class="anchor-link" href="#%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C-(Sync-Node)">¶</a></h4><ul>
-<li>동기 노드(Sync Node)는 가장 기본적인 형태로, 작업이 순차적으로 실행되며 완료될 때까지 다음 단계로 진행하지 않음</li>
-<li>간단한 계산이나 즉시 완료되는 작업에 적합하며, 코드가 직관적이고 디버깅이 용이한 장점</li>
-<li><strong>동기 노드는 CPU 집약적인 작업이나 로컬 데이터 처리에 주로 사용</strong></li>
-</ul>
-<br/>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=b87a27c1">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">sync_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    동기 노드 - 일반적인 노드 타입</span>
-<span class="sd">    순차적으로 실행되며 결과를 즉시 반환</span>
-<span class="sd">    """</span>
-    <span class="c1"># 동기 작업 수행</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">perform_sync_operation</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">])</span>
-
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f3fc50b2">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">perform_sync_operation</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""동기 작업"""</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># 시뮬레이션</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Sync result: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e778ac71">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C-(Async-Node)">비동기 노드 (Async Node)<a class="anchor-link" href="#%EB%B9%84%EB%8F%99%EA%B8%B0-%EB%85%B8%EB%93%9C-(Async-Node)">¶</a></h4><ul>
-<li>비동기 노드(Async Node)는 I/O 작업이나 외부 API 호출과 같이 대기 시간이 발생하는 작업에 효율적</li>
-<li><strong><code>async</code>/<code>await</code> 패턴을 활용하여 여러 작업을 동시에 실행할 수 있으며, <code>asyncio.gather()</code>를 통해 병렬 처리를 구현</strong></li>
-<li>네트워크 요청, 데이터베이스 쿼리, 파일 I/O 등에서 성능을 크게 향상</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3aec97d4">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    비동기 노드 - I/O 작업에 효율적</span>
-<span class="sd">    동시에 여러 작업을 처리할 수 있음</span>
-<span class="sd">    """</span>
-    <span class="c1"># 비동기 작업 수행</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">perform_async_operation</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">])</span>
-
-    <span class="c1"># 여러 비동기 작업 동시 실행</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
-        <span class="n">fetch_data_1</span><span class="p">(),</span>
-        <span class="n">fetch_data_2</span><span class="p">(),</span>
-        <span class="n">fetch_data_3</span><span class="p">()</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"output"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-        <span class="s2">"additional_data"</span><span class="p">:</span> <span class="n">results</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=aed10933">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">perform_async_operation</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""비동기 작업"""</span>
-    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># 시뮬레이션</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Async result: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f724e07e">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_1</span><span class="p">():</span>
-    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">"data_1"</span>
-
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_2</span><span class="p">():</span>
-    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">"data_2"</span>
-
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch_data_3</span><span class="p">():</span>
-    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">"data_3"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9e14bf24">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EC%A1%B0%EA%B1%B4%EB%B6%80-%EB%85%B8%EB%93%9C-(Conditional-Node)">조건부 노드 (Conditional Node)<a class="anchor-link" href="#%EC%A1%B0%EA%B1%B4%EB%B6%80-%EB%85%B8%EB%93%9C-(Conditional-Node)">¶</a></h4><ul>
-<li><strong>상태나 입력에 따라 다른 처리 로직을 선택하는 유연한 패턴</strong></li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d776980c">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">conditional_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    조건부 노드 - 상태에 따라 다른 처리 수행</span>
-<span class="sd">    """</span>
-    <span class="n">mode</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mode"</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"fast"</span><span class="p">:</span>
-        <span class="c1"># 빠른 처리</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">quick_process</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">execution_time</span> <span class="o">=</span> <span class="s2">"fast"</span>
-    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"thorough"</span><span class="p">:</span>
-        <span class="c1"># 정밀 처리</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">thorough_process</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">execution_time</span> <span class="o">=</span> <span class="s2">"slow"</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># 기본 처리</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">default_process</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">execution_time</span> <span class="o">=</span> <span class="s2">"normal"</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"result"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-        <span class="s2">"execution_time"</span><span class="p">:</span> <span class="n">execution_time</span><span class="p">,</span>
-        <span class="s2">"mode_used"</span><span class="p">:</span> <span class="n">mode</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f8a07f54">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quick_process</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"quick"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]}</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">thorough_process</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"thorough"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">:</span> <span class="n">analyze_deeply</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))}</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">default_process</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"default"</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)}</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">analyze_deeply</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-    <span class="c1"># 심층 분석 로직</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Deeply analyzed: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=76f6fce4">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="%EA%B2%80%EC%A6%9D-%EB%85%B8%EB%93%9C-(Validation-Node)">검증 노드 (Validation Node)<a class="anchor-link" href="#%EA%B2%80%EC%A6%9D-%EB%85%B8%EB%93%9C-(Validation-Node)">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f21539a9">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=d78dad38">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ValidationState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">input_data</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="n">validation_errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">is_valid</span><span class="p">:</span> <span class="nb">bool</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=665c0e16">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validation_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ValidationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    검증 노드 - 데이터 유효성 검사</span>
-<span class="sd">    """</span>
-    <span class="n">input_data</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input_data"</span><span class="p">]</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="c1"># 다양한 검증 수행</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">input_data</span><span class="p">:</span>
-        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"입력 데이터가 비어있습니다."</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"문자열이 너무 짧습니다 (최소 3자)."</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"문자열이 너무 깁니다 (최대 1000자)."</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">input_data</span><span class="o">.</span><span class="n">isascii</span><span class="p">():</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"ASCII 문자만 허용됩니다."</span><span class="p">)</span>
-
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="n">input_data</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"음수는 허용되지 않습니다."</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">input_data</span> <span class="o">&gt;</span> <span class="mi">1000000</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"값이 너무 큽니다 (최대 1,000,000)."</span><span class="p">)</span>
-
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"리스트가 비어있습니다."</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
-            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"리스트 항목이 너무 많습니다 (최대 100개)."</span><span class="p">)</span>
-
-    <span class="c1"># 검증 결과 반환</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"validation_errors"</span><span class="p">:</span> <span class="n">errors</span><span class="p">,</span>
-        <span class="s2">"is_valid"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ed76f2a7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%85%B8%EB%93%9C%EC%99%80-%EA%B5%AC%EC%84%B1-(Configuration)">노드와 구성 (Configuration)<a class="anchor-link" href="#%EB%85%B8%EB%93%9C%EC%99%80-%EA%B5%AC%EC%84%B1-(Configuration)">¶</a></h3><ul>
-<li><p><strong><code>RunnableConfig</code>는 LangChain의 핵심 구성 객체로, 노드가 실행될 때 런타임 설정을 전달받을 수 있게 함</strong></p>
-<ul>
-<li>정적으로 정의된 그래프에 동적 유연성을 부여하는 중요한 도구</li>
-<li>노드가 <code>RunnableConfig</code>를 매개변수로 받으면, 실행 시점에 다양한 구성 값들을 참조하여 처리 로직을 조정할 수 있음</li>
-</ul>
-</li>
-<li><p><strong>핵심 활용 영역</strong></p>
-<ul>
-<li><strong>모델 선택과 매개변수 조정</strong> : 같은 노드에서 런타임에 다른 LLM 모델을 사용하거나, <code>temperature</code>, <code>max_tokens</code> 등의 매개변수를 동적으로 설정</li>
-<li><strong>재시도 및 오류 처리 정책</strong> : 최대 재시도 횟수, 백오프 전략, 타임아웃 설정 등을 환경이나 요청의 중요도에 따라 조정</li>
-<li><strong>환경별 설정</strong> : 개발, 테스트, 프로덕션 환경에 따라 다른 데이터베이스 연결, API 엔드포인트, 로깅 수준 등을 적용</li>
-</ul>
-</li>
-<li><p>구성 접근 패턴의 계층적 구조:</p>
-<ul>
-<li><code>config.get("configurable", {})</code>를 통해 사용자 정의 구성에 접근하고, 각 설정값에 대해 기본값을 제공하여 안정성을 보장</li>
-<li>예) <code>config.get("configurable", {}).get("model", "default")</code>와 같은 방식으로 안전하게 구성값을 추출할 수 있음</li>
-</ul>
-</li>
-<li><p>동적 처리 로직의 구현에서는 구성값에 따라 완전히 다른 알고리즘이나 처리 방식을 선택할 수 있음</p>
-<ul>
-<li>같은 노드가 빠른 처리 모드에서는 간단한 휴리스틱을 사용하고, 정밀 모드에서는 복잡한 AI 모델을 활용하는 것이 가능</li>
-<li>성능과 정확도 사이의 트레이드오프를 런타임에 조절할 수 있게 함</li>
-</ul>
-</li>
-<li><p>사용자별 개인화 : 사용자 ID나 권한 레벨을 구성으로 전달하여, 같은 노드에서도 사용자별로 다른 데이터 접근 권한이나 처리 방식을 적용 $\rightarrow$ 멀티테넌트 환경에서 특히 유용</p>
-</li>
-<li><p>구성의 전파와 상속에서는 부모 그래프의 구성이 서브그래프나 하위 노드로 자동 전파되며, 필요에 따라 특정 노드에서 구성을 오버라이드할 수 있음 $\rightarrow$ 계층적인 구성 관리가 가능</p>
-</li>
-<li><p>성능 최적화</p>
-<ul>
-<li>리소스가 제한된 환경에서는 간단한 모델을 사용하고, 고성능 환경에서는 더 복잡한 모델을 사용하도록 동적으로 조정</li>
-<li>캐싱, 배치 처리, 병렬 실행 등의 최적화 기법도 구성을 통해 제어</li>
-</ul>
-</li>
-<li><p>모니터링과 관찰 가능성</p>
-<ul>
-<li>로깅 수준, 메트릭 수집, 트레이싱 등을 환경이나 디버깅 필요에 따라 조정 $\rightarrow$ 프로덕션 환경에서의 디버깅과 성능 분석에 매우 유용</li>
-</ul>
-</li>
-<li><p>보안 고려사항에서는 민감한 정보가 구성에 포함될 수 있으므로, 적절한 암호화와 접근 제어가 필요</p>
-</li>
-<li><p>구성값의 유효성 검증을 통해 악의적인 입력이나 잘못된 설정으로 인한 시스템 장애를 방지해야 함</p>
-</li>
-</ul>
-<br/>
-<h4 id="%EB%9F%B0%ED%83%80%EC%9E%84-%EA%B5%AC%EC%84%B1%EC%9D%84-%EB%B0%9B%EB%8A%94-%EB%85%B8%EB%93%9C">런타임 구성을 받는 노드<a class="anchor-link" href="#%EB%9F%B0%ED%83%80%EC%9E%84-%EA%B5%AC%EC%84%B1%EC%9D%84-%EB%B0%9B%EB%8A%94-%EB%85%B8%EB%93%9C">¶</a></h4>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=df3cd1e0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.runnables</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunnableConfig</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8b3bf1e9">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">configurable_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">RunnableConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    구성 가능한 노드</span>
-<span class="sd">    런타임에 동작을 조정할 수 있음</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        state: 현재 상태</span>
-<span class="sd">        config: 런타임 구성</span>
-<span class="sd">    """</span>
-    <span class="c1"># 구성에서 값 가져오기</span>
-    <span class="n">model_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configurable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"model"</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">)</span>
-    <span class="n">temperature</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configurable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">)</span>
-    <span class="n">max_retries</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configurable"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"max_retries"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using model: </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">, temperature: </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="c1"># 구성에 따른 처리</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_retries</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">process_with_model</span><span class="p">(</span>
-                <span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">],</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
-                <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span>
-            <span class="p">)</span>
-            <span class="k">break</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">attempt</span> <span class="o">==</span> <span class="n">max_retries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="s2">"Failed after all retries"</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"output"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-        <span class="s2">"config_used"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"model"</span><span class="p">:</span> <span class="n">model_name</span><span class="p">,</span>
-            <span class="s2">"temperature"</span><span class="p">:</span> <span class="n">temperature</span><span class="p">,</span>
-            <span class="s2">"retries"</span><span class="p">:</span> <span class="n">max_retries</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=61fac35b">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_with_model</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""모델을 사용한 처리 (시뮬레이션)"""</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Processed with </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2"> at temperature </span><span class="si">{</span><span class="n">temperature</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">input_data</span><span class="si">}</span><span class="s2">"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=78ed97fb">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h3 id="%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%84%B1-%EA%B3%A0%EA%B8%89-%ED%8C%A8%ED%84%B4">노드 구성 고급 패턴<a class="anchor-link" href="#%EB%85%B8%EB%93%9C-%EA%B5%AC%EC%84%B1-%EA%B3%A0%EA%B8%89-%ED%8C%A8%ED%84%B4">¶</a></h3><ul>
-<li>LangGraph에서 복잡한 애플리케이션 요구사항을 충족하기 위해 노드를 더욱 유연하고 재사용 가능하며 유지보수가 용이하도록 설계하는 방법론들을 제공</li>
-</ul>
-<br/>
-<h4 id="1.-%ED%81%B4%EB%9E%98%EC%8A%A4-%EA%B8%B0%EB%B0%98-%EB%85%B8%EB%93%9C">1. 클래스 기반 노드<a class="anchor-link" href="#1.-%ED%81%B4%EB%9E%98%EC%8A%A4-%EA%B8%B0%EB%B0%98-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li>클래스 기반 노드는 객체지향 설계의 장점을 LangGraph에 적용한 패턴<ul>
-<li><strong>노드가 내부 상태를 유지해야 하거나, 복잡한 로직을 캡슐화해야 하거나, 여러 메서드를 통해 기능을 분리해야 할 때 특히 유용</strong></li>
-</ul>
-</li>
-</ul>
-<ul>
-<li><p>생성자를 통해 초기 설정을 받고, <code>__call__</code> 메서드를 구현하여 호출 가능한 객체로 만들어짐</p>
-<p>$\rightarrow$ 캐싱, 통계 수집, 성능 모니터링 등의 기능을 노드 내부에서 자체적으로 관리</p>
-</li>
-<li><p><strong>장점 : 상태 지속성과 메서드 분리</strong></p>
-<ul>
-<li>처리 횟수 추적, 캐시 관리, 설정 저장 등을 클래스의 인스턴스 변수로 관리할 수 있으며, 각기 다른 처리 방식을 별도의 메서드로 분리하여 코드의 가독성과 유지보수성을 높일 수 있음</li>
-<li>상속을 통해 기본 기능을 확장하거나 특화된 버전을 만들 수 있어 코드 재사용성이 향상</li>
-</ul>
-</li>
-</ul>
-<br/>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=53a371f7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DataProcessorNode</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    클래스 기반 노드</span>
-<span class="sd">    상태를 가지고 복잡한 로직을 구현할 때 유용</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processor_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"standard"</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">processor_type</span> <span class="o">=</span> <span class="n">processor_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">processing_count</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        노드 실행 메서드</span>
-<span class="sd">        클래스 인스턴스를 호출 가능하게 만듦</span>
-<span class="sd">        """</span>
-        <span class="n">input_data</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span>
-
-        <span class="c1"># 캐시 확인</span>
-        <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">processor_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">input_data</span><span class="si">}</span><span class="s2">"</span>
-        <span class="k">if</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cache hit for </span><span class="si">{</span><span class="n">cache_key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">],</span> <span class="s2">"from_cache"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-
-        <span class="c1"># 처리 수행</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor_type</span> <span class="o">==</span> <span class="s2">"standard"</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor_type</span> <span class="o">==</span> <span class="s2">"advanced"</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_advanced_process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_process</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
-
-        <span class="c1"># 통계 업데이트</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">processing_count</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="c1"># 캐시 저장</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"output"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>
-            <span class="s2">"processor_type"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor_type</span><span class="p">,</span>
-            <span class="s2">"total_processed"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">processing_count</span><span class="p">,</span>
-            <span class="s2">"from_cache"</span><span class="p">:</span> <span class="kc">False</span>
-        <span class="p">}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_standard_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Standard processed: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_advanced_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Advanced processed: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_default_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Default processed: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
-
-<span class="c1"># 사용 예시</span>
-<span class="n">processor</span> <span class="o">=</span> <span class="n">DataProcessorNode</span><span class="p">(</span><span class="n">processor_type</span><span class="o">=</span><span class="s2">"advanced"</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"processor"</span><span class="p">,</span> <span class="n">processor</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=af21ce3d">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="2.-%EB%8D%B0%EC%BD%94%EB%A0%88%EC%9D%B4%ED%84%B0-%ED%8C%A8%ED%84%B4-%EB%85%B8%EB%93%9C">2. 데코레이터 패턴 노드<a class="anchor-link" href="#2.-%EB%8D%B0%EC%BD%94%EB%A0%88%EC%9D%B4%ED%84%B0-%ED%8C%A8%ED%84%B4-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li>함수형 프로그래밍의 고차 함수 개념을 활용하여, 원본 노드 로직을 수정하지 않고도 새로운 기능을 추가할 수 있게 해줌</li>
-<li>타이밍 측정, 에러 처리, 로깅, 캐싱, 권한 검사 등의 횡단 관심사(cross-cutting concerns)를 깔끔하게 분리할 수 있음</li>
-<li><strong>데코레이터 패턴의 핵심 가치는 관심사의 분리와 조합 가능성</strong><ul>
-<li>예) <code>@timing_decorator</code>와 <code>@error_handling_decorator</code>를 함께 사용하여 실행 시간 측정과 에러 처리를 동시에 적용</li>
-</ul>
-</li>
-</ul>
-<br/>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ae1b0a58">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=bd693a65">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">timing_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""노드 실행 시간 측정 데코레이터"""</span>
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">execution_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
-
-        <span class="c1"># 실행 시간 추가</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">result</span><span class="p">[</span><span class="s2">"execution_time"</span><span class="p">]</span> <span class="o">=</span> <span class="n">execution_time</span>
-
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> executed in </span><span class="si">{</span><span class="n">execution_time</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
-
-    <span class="k">return</span> <span class="n">wrapper</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=be8d6562">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">error_handling_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""에러 처리 데코레이터"""</span>
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error in </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">{</span>
-                <span class="s2">"error"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-                <span class="s2">"error_node"</span><span class="p">:</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"failed"</span>
-            <span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">wrapper</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9cc9b22f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="nd">@timing_decorator</span>
-<span class="nd">@error_handling_decorator</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">decorated_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    데코레이터가 적용된 노드</span>
-<span class="sd">    자동으로 시간 측정과 에러 처리가 됨</span>
-<span class="sd">    """</span>
-    <span class="c1"># 의도적으로 느린 작업</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
-
-    <span class="c1"># 비즈니스 로직</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"input"</span><span class="p">])</span>
-
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"output"</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=245cadcf">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<br/>
-<h4 id="3.-%ED%8C%A9%ED%86%A0%EB%A6%AC-%ED%8C%A8%ED%84%B4-%EB%85%B8%EB%93%9C">3. 팩토리 패턴 노드<a class="anchor-link" href="#3.-%ED%8C%A9%ED%86%A0%EB%A6%AC-%ED%8C%A8%ED%84%B4-%EB%85%B8%EB%93%9C">¶</a></h4><ul>
-<li>런타임에 다양한 타입의 노드를 동적으로 생성하는 패턴</li>
-<li>설정이나 조건에 따라 다른 동작을 하는 노드들을 일관된 인터페이스로 생성할 수 있게 함</li>
-<li><strong>팩토리 함수는 노드 타입과 매개변수를 받아 해당하는 노드 함수를 생성하고 반환 $\rightarrow$ 코드 중복을 줄이고 노드 생성 로직을 중앙화</strong></li>
-<li><strong>팩토리 패턴의 주요 장점은 유연성과 확장성</strong><ul>
-<li>새로운 노드 타입을 추가할 때 기존 코드를 수정하지 않고 팩토리 함수만 확장하면 되며, 설정 파일이나 사용자 입력에 따라 동적으로 그래프 구조를 구성</li>
-<li>비슷한 기능을 하는 노드들의 공통 패턴을 추상화하여 재사용</li>
-</ul>
-</li>
-</ul>
-<br/>
-<ul>
-<li>팩토리 함수</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7699cc34">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_processing_node</span><span class="p">(</span><span class="n">node_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    노드 팩토리 함수</span>
-<span class="sd">    다양한 타입의 노드를 동적으로 생성</span>
-<span class="sd">    """</span>
-
-    <span class="k">if</span> <span class="n">node_type</span> <span class="o">==</span> <span class="s2">"transformer"</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">transformer_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-            <span class="n">transform_func</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transform_func"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
-            <span class="n">input_field</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_field"</span><span class="p">,</span> <span class="s2">"input"</span><span class="p">)</span>
-            <span class="n">output_field</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_field"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">)</span>
-
-            <span class="n">transformed</span> <span class="o">=</span> <span class="n">transform_func</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">input_field</span><span class="p">])</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">output_field</span><span class="p">:</span> <span class="n">transformed</span><span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">transformer_node</span>
-
-    <span class="k">elif</span> <span class="n">node_type</span> <span class="o">==</span> <span class="s2">"filter"</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">filter_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-            <span class="n">filter_func</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"filter_func"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">True</span><span class="p">)</span>
-            <span class="n">items_field</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"items_field"</span><span class="p">,</span> <span class="s2">"items"</span><span class="p">)</span>
-
-            <span class="n">filtered</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">state</span><span class="p">[</span><span class="n">items_field</span><span class="p">]</span> <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">items_field</span><span class="p">:</span> <span class="n">filtered</span><span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">filter_node</span>
-
-    <span class="k">elif</span> <span class="n">node_type</span> <span class="o">==</span> <span class="s2">"aggregator"</span><span class="p">:</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">aggregator_node</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-            <span class="n">agg_func</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"agg_func"</span><span class="p">,</span> <span class="nb">sum</span><span class="p">)</span>
-            <span class="n">values_field</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"values_field"</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">)</span>
-            <span class="n">result_field</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"result_field"</span><span class="p">,</span> <span class="s2">"result"</span><span class="p">)</span>
-
-            <span class="n">aggregated</span> <span class="o">=</span> <span class="n">agg_func</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="n">values_field</span><span class="p">])</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">result_field</span><span class="p">:</span> <span class="n">aggregated</span><span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">aggregator_node</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown node type: </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=82b6dec2">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>팩토리로 노드 생성</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=58f82cdb">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">uppercase_node</span> <span class="o">=</span> <span class="n">create_processing_node</span><span class="p">(</span>
-    <span class="s2">"transformer"</span><span class="p">,</span>
-    <span class="n">transform_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
-    <span class="n">input_field</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-    <span class="n">output_field</span><span class="o">=</span><span class="s2">"uppercase_text"</span>
-<span class="p">)</span>
-
-<span class="n">positive_filter</span> <span class="o">=</span> <span class="n">create_processing_node</span><span class="p">(</span>
-    <span class="s2">"filter"</span><span class="p">,</span>
-    <span class="n">filter_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">items_field</span><span class="o">=</span><span class="s2">"numbers"</span>
-<span class="p">)</span>
-
-<span class="n">sum_aggregator</span> <span class="o">=</span> <span class="n">create_processing_node</span><span class="p">(</span>
-    <span class="s2">"aggregator"</span><span class="p">,</span>
-    <span class="n">agg_func</span><span class="o">=</span><span class="nb">sum</span><span class="p">,</span>
-    <span class="n">values_field</span><span class="o">=</span><span class="s2">"scores"</span><span class="p">,</span>
-    <span class="n">result_field</span><span class="o">=</span><span class="s2">"total_score"</span>
+<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"recursion_limit"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}</span>  <span class="c1"># 최대 10회 슈퍼스텝</span>
 <span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=8fae86d7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"uppercase"</span><span class="p">,</span> <span class="n">uppercase_node</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"filter_positive"</span><span class="p">,</span> <span class="n">positive_filter</span><span class="p">)</span>
-<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"calculate_sum"</span><span class="p">,</span> <span class="n">sum_aggregator</span><span class="p">)</span>
+<br/>
+<h3 id="%EC%8A%A4%ED%8A%B8%EB%A6%AC%EB%B0%8D-%EC%8B%A4%ED%96%89-:-stream">스트리밍 실행 : <code>stream</code><a class="anchor-link" href="#%EC%8A%A4%ED%8A%B8%EB%A6%AC%EB%B0%8D-%EC%8B%A4%ED%96%89-:-stream">¶</a></h3><ul>
+<li>각 노드의 실행 결과를 실시간으로 받아볼 수 있음</li>
+</ul>
+<br/>
+<div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="n">stream_mode</span><span class="o">=</span><span class="s2">"values"</span>
+<span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"현재 상태: </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
+<br/>
+<ul>
+<li><strong>스트림 종류</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>모드</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>values</code></td>
+<td>각 단계 후 전체 상태</td>
+</tr>
+<tr>
+<td><code>updates</code></td>
+<td>변경된 부분만</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td>LLM 토큰 단위 스트리밍</td>
+</tr>
+<tr>
+<td><code>custom</code></td>
+<td>사용자 정의 데이터</td>
+</tr>
+<tr>
+<td><code>debug</code></td>
+<td>상세 실행 정보</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a917e003">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=56ce266d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89">비동기 실행<a class="anchor-link" href="#%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89">¶</a></h3><br/>
+<h4 id="ainvoke"><code>ainvoke</code><a class="anchor-link" href="#ainvoke">¶</a></h4><br/>
+<div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+<br/>
+<h4 id="astream"><code>astream</code><a class="anchor-link" href="#astream">¶</a></h4><br/>
+<div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_process</span><span class="p">():</span>
+    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">astream</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="n">stream_mode</span><span class="o">=</span><span class="s2">"values"</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</pre></div>
+<br/>
+<h4 id="%EB%B3%91%EB%A0%AC-%EC%8B%A4%ED%96%89"><code>병렬 실행</code><a class="anchor-link" href="#%EB%B3%91%EB%A0%AC-%EC%8B%A4%ED%96%89">¶</a></h4><br/>
+<div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}),</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span>
+<span class="p">)</span>
+</pre></div>
+<br/>
+<h3 id="%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95%EC%9D%98-%EC%84%A0%ED%83%9D">실행 방법의 선택<a class="anchor-link" href="#%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95%EC%9D%98-%EC%84%A0%ED%83%9D">¶</a></h3><br/>
+<h4 id="invoke-%EA%B6%8C%EC%9E%A5">invoke 권장<a class="anchor-link" href="#invoke-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
+<li>배치 처리 시스템</li>
+<li>단순 API 요청-응답</li>
+<li>테스트 및 디버깅</li>
+</ul>
+<br/>
+<h4 id="stream-%EA%B6%8C%EC%9E%A5">stream 권장<a class="anchor-link" href="#stream-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
+<li>실시간 사용자 피드백</li>
+<li>장시간 작업 진행 표시</li>
+<li>챗봇 응답 스트리밍</li>
+</ul>
+<br/>
+<h4 id="async-%EA%B6%8C%EC%9E%A5">async 권장<a class="anchor-link" href="#async-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
+<li>고동시성 서버</li>
+<li>I/O 집약적 워크플로우</li>
+<li>마이크로서비스 환경</li>
+</ul>
 <br/>
 <hr/>
 </div>

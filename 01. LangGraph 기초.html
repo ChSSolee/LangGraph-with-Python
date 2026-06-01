@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>01-08. Graph Complie &amp; Invoke (동기, 스트림, 비동기)</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>01. LangGraph 기초</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,288 +7511,39 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=49f24545">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=110b8e77">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%97%B0%EA%B2%B0(%EC%BB%B4%ED%8C%8C%EC%9D%BC)-%EB%B0%8F-%EC%8B%A4%ED%96%89">그래프 연결(컴파일) 및 실행<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%97%B0%EA%B2%B0(%EC%BB%B4%ED%8C%8C%EC%9D%BC)-%EB%B0%8F-%EC%8B%A4%ED%96%89">¶</a></h2><br/>
-<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%A0%95%EC%9D%98">그래프 정의<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%A0%95%EC%9D%98">¶</a></h3><ul>
-<li><code>StateGraph</code> 객체 생성 : 상태 기반의 계산 그래프를 정의</li>
+<h1 id="1.-LangGraph-%EA%B8%B0%EC%B4%88">1. LangGraph 기초<a class="anchor-link" href="#1.-LangGraph-%EA%B8%B0%EC%B4%88">¶</a></h1><br/>
+<h2 id="01.-%EB%9E%AD%EA%B7%B8%EB%9E%98%ED%94%84-(LangGraph)-%EC%86%8C%EA%B0%9C">01. 랭그래프 (LangGraph) 소개<a class="anchor-link" href="#01.-%EB%9E%AD%EA%B7%B8%EB%9E%98%ED%94%84-(LangGraph)-%EC%86%8C%EA%B0%9C">¶</a></h2><ul>
+<li><a href="https://www.langchain.com/langgraph">https://www.langchain.com/langgraph</a></li>
+<li>LangGraph는 자연어 처리와 AI 응용 프로그램 개발을 위한 강력한 프레임워크로, 복잡한 언어 모델과의 상호작용을 효율적이고 구조화된 방식으로 구현할 수 있도록 도움.</li>
+<li>다양한 데이터 소스와 언어 모델을 통합하여 지능형 응답 생성, 정보 검색, 텍스트 분석 등의 고도화된 시스템을 구축할 수 있음</li>
 </ul>
 <br/>
-<div class="highlight"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">MyState</span><span class="p">)</span>
-</pre></div>
-<br/>
-<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%B4%ED%8C%8C%EC%9D%BC">그래프 컴파일<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%BB%B4%ED%8C%8C%EC%9D%BC">¶</a></h3><ul>
-<li><code>compile()</code> 메서드는 정의된 그래프를 실행 가능한 형태로 변환<ul>
-<li>이 과정에서 그래프의 구조가 검증되고, 최적화</li>
-<li>컴파일된 그래프는 <code>app</code>변수에 저장되며, 실행할 준비가 된 상태</li>
+<h3 id="LangGraph-%EC%B2%AB%EA%B1%B8%EC%9D%8C">LangGraph 첫걸음<a class="anchor-link" href="#LangGraph-%EC%B2%AB%EA%B1%B8%EC%9D%8C">¶</a></h3><ul>
+<li><strong>LangGraph는 단계별로 실행되는 작업들을 연결하는 도구</strong></li>
+<li><strong>각각의 작업(노드)을 화살표(엣지)로 연결해서 하나의 완성된 프로그램을 개발</strong></li>
 </ul>
-</li>
-</ul>
-<br/>
-<div class="highlight"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
-</pre></div>
-<br/>
-<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89">그래프 실행<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89">¶</a></h3><ul>
-<li><code>invoke()</code>메서드는 컴파일된 그래프를 실행<ul>
-<li>랭체인에서 사용하는 문법 구조를 그대로 준용</li>
-</ul>
-</li>
-<li>인자로 전달된 초기 상태는, 상태 클래스의 구조와 일치해야 함</li>
-<li>그래프는 초기 상태부터 시작하여 정의된 노드들을 순차적으로 실행</li>
-</ul>
-<br/>
-<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-</pre></div>
-<br/>
-<h3 id="%EA%B2%B0%EA%B3%BC-%EC%B6%9C%EB%A0%A5">결과 출력<a class="anchor-link" href="#%EA%B2%B0%EA%B3%BC-%EC%B6%9C%EB%A0%A5">¶</a></h3><ul>
-<li>그래프 실행의 결과를 출력</li>
-</ul>
-<br/>
-<h4 id="%EC%A3%BC%EC%9A%94-%EA%B3%BC%EC%A0%95">주요 과정<a class="anchor-link" href="#%EC%A3%BC%EC%9A%94-%EA%B3%BC%EC%A0%95">¶</a></h4><ol>
-<li><strong>상태 기반 계산</strong> : LangGraph는 상태를 중심으로 동작. 각 노드는 현재 상태를 입력으로 받아 새로운 상태를 출력</li>
-<li><strong>그래프 구조</strong> : 노드와 엣지로 구성된 그래프 구조를 통해 복잡한 워크플로우를 모델링</li>
-<li><strong>컴파일 과정</strong> : 컴파일은 정의된 그래프를 효율적으로 실행할 수 있는 형태로 변환. 이 과정에서 그래프의 일관성 검사도 이루어 짐</li>
-<li><strong>실행 흐름</strong> : 그래프 실행은 초기 상태에서 시작하여 정의된 노드들을 순차적으로 처리하며, 각 노드는 상태를 업데이트 함</li>
-</ol>
-<br/>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=22762f12">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c52f6edd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C-%EC%97%B0%EA%B2%B0">그래프 구성 요소 연결<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%9A%94%EC%86%8C-%EC%97%B0%EA%B2%B0">¶</a></h3><ul>
-<li>그래프 구성 요소 연결은 LangGraph 애플리케이션의 아키텍처 품질을 결정하는 핵심 과정<ul>
-<li>그래프 구성은 단순히 노드와 엣지를 연결하는 것을 넘어서, <strong>비즈니스 로직의 흐름을 명확하게 표현하고 예외 상황을 적절하게 처리하며 시스템의 안정성과 확장성을 보장하는 종합적인 설계 과정</strong></li>
-</ul>
-</li>
-<li><strong>그래프 구성의 핵심 원칙은 책임 분리(Separation of Concerns)</strong> 에 있습니다. 각 노드는 명확하고 단일한 책임을 가져야 하며, 상태의 특정 측면만을 업데이트</li>
-</ul>
 <br/>
-<h4 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%98%88%EC%8B%9C">그래프 구성 예시<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EA%B5%AC%EC%84%B1-%EC%98%88%EC%8B%9C">¶</a></h4>
+<h4 id="%EA%B0%84%EB%8B%A8%ED%95%9C-%EA%B5%AC%ED%98%84">간단한 구현<a class="anchor-link" href="#%EA%B0%84%EB%8B%A8%ED%95%9C-%EA%B5%AC%ED%98%84">¶</a></h4>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=92a97da9">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Optional</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">visualize_graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualize_graph</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aaa6a728">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>상태 정의</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=414c4858">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">WorkflowState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
-    <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">processing_stage</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">results</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">]</span>
-    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5026dfa6">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>노드 함수 정의</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=3e563c5f">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_input</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""입력 검증 노드"""</span>
-    <span class="n">input_data</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input_data"</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">input_data</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"입력 데이터가 비어있습니다"</span><span class="p">,</span>
-            <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validation_failed"</span>
-        <span class="p">}</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"입력 데이터가 너무 깁니다"</span><span class="p">,</span>
-            <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validation_failed"</span>
-        <span class="p">}</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"validated"</span><span class="p">,</span>
-        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"입력 검증 완료"</span><span class="p">]</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=62379ae0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">process_data</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""데이터 처리 노드"""</span>
-    <span class="c1"># 실제 처리 로직</span>
-    <span class="n">processed</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s2">"input_data"</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"processed"</span><span class="p">,</span>
-        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"처리 결과: </span><span class="si">{</span><span class="n">processed</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span>
-        <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="o">**</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"metadata"</span><span class="p">,</span> <span class="p">{}),</span>
-            <span class="s2">"processed_at"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=c19e20a0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">generate_output</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""출력 생성 노드"""</span>
-    <span class="n">final_output</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="s2">"results"</span><span class="p">])</span>
-
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"completed"</span><span class="p">,</span>
-        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"최종 출력: </span><span class="si">{</span><span class="n">final_output</span><span class="si">}</span><span class="s2">"</span><span class="p">],</span>
-        <span class="s2">"metadata"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="o">**</span><span class="n">state</span><span class="p">[</span><span class="s2">"metadata"</span><span class="p">],</span>
-            <span class="s2">"completed_at"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=306b9ae7">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">handle_error</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""에러 처리 노드"""</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"processing_stage"</span><span class="p">:</span> <span class="s2">"error_handled"</span><span class="p">,</span>
-        <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"에러 처리: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
-    <span class="p">}</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=efaba114">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>라우팅 함수</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=15d95587">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">route_after_validation</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">WorkflowState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""검증 후 라우팅"""</span>
-    <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"error"</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">"error"</span>
-    <span class="k">return</span> <span class="s2">"process"</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4252abcf">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li>그래프 구성</li>
-</ul>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e35de26c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9fa30824">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7800,44 +7551,135 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">workflow</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">WorkflowState</span><span class="p">)</span>
-
-<span class="c1"># 노드 추가</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"validate"</span><span class="p">,</span> <span class="n">validate_input</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="n">process_data</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"output"</span><span class="p">,</span> <span class="n">generate_output</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"error_handler"</span><span class="p">,</span> <span class="n">handle_error</span><span class="p">)</span>
-
-<span class="c1"># 엣지 추가</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"validate"</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_conditional_edges</span><span class="p">(</span>
-    <span class="s2">"validate"</span><span class="p">,</span>
-    <span class="n">route_after_validation</span><span class="p">,</span>
-    <span class="p">{</span>
-        <span class="s2">"process"</span><span class="p">:</span> <span class="s2">"process"</span><span class="p">,</span>
-        <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"error_handler"</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"process"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"output"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"error_handler"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-
-<span class="c1"># 그래프 컴파일</span>
-<span class="n">app</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 </pre></div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=440e4ab1">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0dfbef09">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ol>
+<li><strong>데이터 저장소 만들기 (State)</strong></li>
+</ol>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6eefd696">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">visualize_graph</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=264ece76">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ol start="2">
+<li><strong>작업 함수 만들기 (Node)</strong></li>
+</ol>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=414e8ec7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">say_hello</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"message"</span><span class="p">:</span> <span class="s2">"Hello, LangGraph!"</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=95bf4d38">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ol start="3">
+<li><strong>그래프 만들기</strong></li>
+</ol>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=724e6cd9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">MyState</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">,</span> <span class="n">say_hello</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"hello"</span><span class="p">)</span>
+<span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"hello"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>&lt;langgraph.graph.state.StateGraph at 0x21a5cd42960&gt;</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7ebacdd3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<ol start="4">
+<li><strong>실행하기</strong></li>
+</ol>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9e88f65b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">app</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"message"</span><span class="p">:</span> <span class="s2">""</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -7849,59 +7691,63 @@ a.anchor-link {
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedImage jp-OutputArea-output" tabindex="0">
-<img alt="No description has been provided for this image" class="" src="data:image/png;base64,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"/>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>{'message': 'Hello, LangGraph!'}
+</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e12d9e02">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=96849e34">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95-(invoke,-stream,-async)">그래프 실행 방법 (<code>invoke</code>, <code>stream</code>, <code>async</code>)<a class="anchor-link" href="#%EA%B7%B8%EB%9E%98%ED%94%84-%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95-(invoke,-stream,-async)">¶</a></h3>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=28a123bb">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="LangGraph%EC%99%80-LangChain%EC%9D%98-%EC%B0%A8%EC%9D%B4%EC%A0%90">LangGraph와 LangChain의 차이점<a class="anchor-link" href="#LangGraph%EC%99%80-LangChain%EC%9D%98-%EC%B0%A8%EC%9D%B4%EC%A0%90">¶</a></h3><ul>
+<li>LangGraph와 LangChain은 둘 다 LLM(대규모 언어 모델) 애플리케이션 개발을 위한 강력한 도구이지만, 각각의 특성과 장단점이 존재</li>
+</ul>
+<br/>
 <table>
 <thead>
 <tr>
-<th>메서드</th>
-<th>설명</th>
-<th>용도</th>
+<th>특징</th>
+<th>LangGraph</th>
+<th>LangChain</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>invoke()</code></td>
-<td>동기 실행, 최종 결과 반환</td>
-<td>배치 처리, 테스트</td>
+<td>주요 목적</td>
+<td>복잡한 워크플로우 및 의사결정 프로세스 구현</td>
+<td>LLM 통합 및 체인 구성</td>
 </tr>
 <tr>
-<td><code>stream()</code></td>
-<td>동기 스트리밍, 중간 결과 반환</td>
-<td>실시간 UI</td>
+<td>구조</td>
+<td>그래프 기반</td>
+<td>체인 및 에이전트 기반</td>
 </tr>
 <tr>
-<td><code>ainvoke()</code></td>
-<td>비동기 실행</td>
-<td>고동시성 서버</td>
+<td>상태 관리</td>
+<td>명시적이고 세밀한 제어</td>
+<td>암시적이고 자동화된 관리</td>
 </tr>
 <tr>
-<td><code>astream()</code></td>
-<td>비동기 스트리밍</td>
-<td>비동기 실시간 UI</td>
+<td>유연성</td>
+<td>높음 (커스텀 로직 쉽게 구현)</td>
+<td>중간 (미리 정의된 컴포넌트 중심)</td>
+</tr>
+<tr>
+<td>학습 곡선</td>
+<td>상대적으로 가파름</td>
+<td>상대적으로 완만함</td>
+</tr>
+<tr>
+<td>용도</td>
+<td>복잡한 AI 시스템, 다중 에이전트</td>
+<td>간단한 LLM 애플리케이션, RAG</td>
 </tr>
 </tbody>
 </table>
@@ -7909,139 +7755,493 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f07c98ef">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6feb65d9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89-:-invoke">동기 실행 : <code>invoke</code><a class="anchor-link" href="#%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89-:-invoke">¶</a></h3><ul>
-<li>전체 그래프 실행이 완료될 떄까지 대기</li>
+<h4 id="%EC%A3%BC%EC%9A%94-%EB%AA%A9%EC%A0%81:">주요 목적:<a class="anchor-link" href="#%EC%A3%BC%EC%9A%94-%EB%AA%A9%EC%A0%81:">¶</a></h4><ul>
+<li><strong>LangGraph는 복잡한 워크플로우와 정교한 의사결정 프로세스를 구현하는 데 특화</strong> $\rightarrow$ 여러 단계의 처리 과정이나 조건부 로직이 필요한 고급 AI 시스템에 적합</li>
+<li>LangChain은 LLM을 다양한 외부 도구와 쉽게 통합하고, 간단한 체인 구조로 애플리케이션을 구성하는 데 중점 $\rightarrow$ <strong>빠른 프로토타이핑과 기본적인 LLM 기반 애플리케이션 개발에 유용</strong></li>
 </ul>
 <br/>
-<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"messages"</span><span class="p">:</span> <span class="p">[]})</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"최종 상태: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-<br/>
-<h4 id="%EC%84%A4%EC%A0%95-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98">설정 매개변수<a class="anchor-link" href="#%EC%84%A4%EC%A0%95-%EB%A7%A4%EA%B0%9C%EB%B3%80%EC%88%98">¶</a></h4><br/>
-<div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"configurable"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"thread_id"</span><span class="p">:</span> <span class="s2">"user_123"</span>   <span class="c1"># 세션 식별자</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-</pre></div>
-<br/>
-<h4 id="%EC%9E%AC%EA%B7%80-%EC%A0%9C%ED%95%9C-%EC%84%A4%EC%A0%95">재귀 제한 설정<a class="anchor-link" href="#%EC%9E%AC%EA%B7%80-%EC%A0%9C%ED%95%9C-%EC%84%A4%EC%A0%95">¶</a></h4><ul>
-<li>무한 루프 방지</li>
+<h4 id="%EA%B5%AC%EC%A1%B0:">구조:<a class="anchor-link" href="#%EA%B5%AC%EC%A1%B0:">¶</a></h4><ul>
+<li>LangGraph는 그래프 기반 구조를 채택하여 노드와 엣지로 구성된 <strong>유연한 워크플로우</strong>를 생성 $\rightarrow$ 복잡한 로직과 다단계 프로세스를 직관적으로 모델링하는 데 도움</li>
+<li>LangChain은 체인과 에이전트 기반 구조를 사용 $\rightarrow$ <strong>선형적인 처리 과정이나 미리 정의된 에이전트 패턴을 구현하기 쉽게 만듬</strong></li>
 </ul>
 <br/>
-<div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-    <span class="p">{</span><span class="s2">"recursion_limit"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}</span>  <span class="c1"># 최대 10회 슈퍼스텝</span>
+<h4 id="%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC:">상태 관리:<a class="anchor-link" href="#%EC%83%81%ED%83%9C-%EA%B4%80%EB%A6%AC:">¶</a></h4><ul>
+<li>LangGraph는 <strong>명시적이고 세밀한 상태 관리</strong>를 제공. 개발자가 각 단계에서 상태를 직접 제어하고 수정할 수 있어, 복잡한 상태 변화를 정확하게 추적하고 관리할 수 있음</li>
+<li>LangChain은 <strong>상대적으로 암시적이고 자동화된 상태 관리를 제공</strong> $\rightarrow$ 이는 개발 과정을 단순화하지만, 세부적인 상태 제어가 필요한 경우 제한적일 수 있습니다.</li>
+</ul>
+<br/>
+<h4 id="%EC%9C%A0%EC%97%B0%EC%84%B1:">유연성:<a class="anchor-link" href="#%EC%9C%A0%EC%97%B0%EC%84%B1:">¶</a></h4><ul>
+<li>LangGraph는 높은 유연성을 제공하여 커스텀 로직을 쉽게 구현. <strong>개발자가 원하는 대로 그래프 구조를 설계하고 각 노드의 동작을 상세하게 정의</strong></li>
+<li>LangChain은 미리 정의된 컴포넌트를 중심으로 구성되어 있어, 기본적인 기능을 빠르게 구현할 수 있지만 <strong>고도로 커스터마이즈된 로직을 구현하는 데는 상대적으로 제한</strong></li>
+</ul>
+<br/>
+<h4 id="%ED%95%99%EC%8A%B5-%EA%B3%A1%EC%84%A0:">학습 곡선:<a class="anchor-link" href="#%ED%95%99%EC%8A%B5-%EA%B3%A1%EC%84%A0:">¶</a></h4><ul>
+<li>LangGraph는 그래프 이론과 상태 관리에 대한 이해가 필요하여 상대적으로 가파른 러닝 커브. 이를 통해 더 복잡하고 정교한 시스템을 구축</li>
+<li>LangChain은 직관적인 API와 풍부한 예제로 인해 상대적으로 완만한 러닝 커브. 초보자도 빠르게 기본적인 LLM 애플리케이션을 만들 수 있음.</li>
+</ul>
+<br/>
+<h4 id="%EC%9A%A9%EB%8F%84:">용도:<a class="anchor-link" href="#%EC%9A%A9%EB%8F%84:">¶</a></h4><ul>
+<li><strong>LangGraph는 복잡한 AI 시스템이나 다중 에이전트 시스템을 구축하는 데 적합</strong> $\rightarrow$  여러 AI 모델이 상호작용하거나 복잡한 의사결정 과정이 필요한 프로젝트에 이상적</li>
+<li>LangChain은 간단한 LLM 애플리케이션이나 RAG(Retrieval-Augmented Generation) 시스템을 구축하는 데 주로 사용 $\rightarrow$ 빠른 개발과 프로토타이핑이 필요한 프로젝트에 적합</li>
+</ul>
+<br/>
+<blockquote>
+<p><strong>복잡하고 맞춤화된 AI 시스템이 필요하다면 LangGraph가, 빠른 개발과 간단한 LLM 통합이 목표라면 LangChain이 더 적합</strong></p>
+</blockquote>
+<br/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=29a845ba">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h3 id="LangGraph%EC%9D%98-%ED%9A%A8%EC%9A%A9">LangGraph의 효용<a class="anchor-link" href="#LangGraph%EC%9D%98-%ED%9A%A8%EC%9A%A9">¶</a></h3><ul>
+<li><strong>복잡한 로직 구현</strong>: 다단계 의사결정 프로세스나 복잡한 워크플로우를 쉽게 구현</li>
+<li><strong>세밀한 제어</strong>: 애플리케이션의 각 단계를 정밀하게 제어할 수 있어, 고도로 커스터마이즈된 동작을 구현</li>
+<li><strong>확장성</strong>: 서브그래프를 통해 대규모 시스템을 모듈화하여 관리</li>
+<li><strong>상태 지속성</strong>: 체크포인팅을 통해 장기 실행 태스크와 오류 복구를 쉽게 구현</li>
+<li><strong>다중 에이전트 시스템</strong>: 여러 AI 에이전트의 상호작용을 효과적으로 모델링</li>
+</ul>
+<br/>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0d9e30b7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="%EA%B8%B0%EB%B3%B8-%EB%AA%A8%EB%8D%B8-%EC%84%A4%EC%A0%95">기본 모델 설정<a class="anchor-link" href="#%EA%B8%B0%EB%B3%B8-%EB%AA%A8%EB%8D%B8-%EC%84%A4%EC%A0%95">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5ea59cf4">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_chat_model</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>True</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=65901951">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="init_chat_model%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%9C-LLM-%EC%84%A4%EC%A0%95-(%EA%B6%8C%EC%9E%A5)"><code>init_chat_model</code>을 활용한 LLM 설정 (권장)<a class="anchor-link" href="#init_chat_model%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%9C-LLM-%EC%84%A4%EC%A0%95-(%EA%B6%8C%EC%9E%A5)">¶</a></h4>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7315a66c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">gpt4_mini</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span>
+    <span class="s2">"openai:gpt-4.1-mini"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">gpt4</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span>
+    <span class="s2">"openai:gpt-4.1"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d6b5fe3b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EC%8A%A4%ED%8A%B8%EB%A6%AC%EB%B0%8D-%EC%8B%A4%ED%96%89-:-stream">스트리밍 실행 : <code>stream</code><a class="anchor-link" href="#%EC%8A%A4%ED%8A%B8%EB%A6%AC%EB%B0%8D-%EC%8B%A4%ED%96%89-:-stream">¶</a></h3><ul>
-<li>각 노드의 실행 결과를 실시간으로 받아볼 수 있음</li>
-</ul>
-<br/>
-<div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span>
-    <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-    <span class="n">stream_mode</span><span class="o">=</span><span class="s2">"values"</span>
-<span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"현재 상태: </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<h4 id="ChatOpenAI%EB%A5%BC-%EC%A7%81%EC%A0%91-%EC%82%AC%EC%9A%A9"><code>ChatOpenAI</code>를 직접 사용<a class="anchor-link" href="#ChatOpenAI%EB%A5%BC-%EC%A7%81%EC%A0%91-%EC%82%AC%EC%9A%A9">¶</a></h4>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=5ef9e0c8">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChatOpenAI</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=699fa8ad">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">gpt4_mini</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4.1-mini"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">gpt4</span> <span class="o">=</span> <span class="n">ChatOpenAI</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4.1"</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=945aea61">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="%EB%AA%A8%EB%8D%B8-%EC%82%AC%EC%9A%A9-%EC%98%88%EC%8B%9C">모델 사용 예시<a class="anchor-link" href="#%EB%AA%A8%EB%8D%B8-%EC%82%AC%EC%9A%A9-%EC%98%88%EC%8B%9C">¶</a></h4>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=9a7a6eea">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">HumanMessage</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8a607f91">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># GPT-4.1-mini 사용</span>
+<span class="n">response_mini</span> <span class="o">=</span> <span class="n">gpt4_mini</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"Hello, how are you?"</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response_mini</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+<span class="c1"># GPT-4.1 사용</span>
+<span class="n">response_full</span> <span class="o">=</span> <span class="n">gpt4</span><span class="o">.</span><span class="n">invoke</span><span class="p">([</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"Explain the concept of machine learning."</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response_full</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Hello! I'm doing well, thank you. How can I assist you today?
+**Machine learning** is a branch of artificial intelligence (AI) that focuses on building computer systems that can learn from data and improve their performance over time without being explicitly programmed.
+
+**Key points:**
+- **Learning from data:** Machine learning algorithms use large amounts of data to detect patterns and make decisions or predictions.
+- **No explicit programming:** Instead of following fixed instructions, the system uses examples to “learn” how to solve a problem.
+- **Improvement over time:** As more data is provided, the system can refine its predictions or decisions, getting better as it learns.
+
+**Types of machine learning:**
+1. **Supervised learning:** The algorithm is trained on labeled data (data with correct answers), such as spam detection in emails.
+2. **Unsupervised learning:** The algorithm finds patterns or groups in unlabeled data, like customer segmentation.
+3. **Reinforcement learning:** The system learns by trial and error, receiving feedback in the form of rewards or penalties, such as in game-playing AI.
+
+**Example:**  
+A machine learning system might learn to recognize handwritten digits by being shown thousands of examples of labeled digits. Over time, it learns what features distinguish a “5” from a “6,” and can then correctly recognize new, unseen handwritten digits.
+
+**In summary:**  
+Machine learning enables computers to learn from experience (data) and make decisions or predictions without specific instructions for every task.
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3413ed4b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<br/>
+<h4 id="OpenAI-%EB%AA%A8%EB%8D%B8-%EA%B0%80%EC%9D%B4%EB%93%9C-(26%EB%85%84-2%EC%9B%94-%EA%B8%B0%EC%A4%80)">OpenAI 모델 가이드 (26년 2월 기준)<a class="anchor-link" href="#OpenAI-%EB%AA%A8%EB%8D%B8-%EA%B0%80%EC%9D%B4%EB%93%9C-(26%EB%85%84-2%EC%9B%94-%EA%B8%B0%EC%A4%80)">¶</a></h4><ul>
+<li><a href="https://platform.openai.com/docs/models">https://platform.openai.com/docs/models</a></li>
+</ul>
 <br/>
 <ul>
-<li><strong>스트림 종류</strong></li>
+<li><strong>GPT-5 계열 (최신)</strong></li>
 </ul>
 <table>
 <thead>
 <tr>
-<th>모드</th>
-<th>설명</th>
+<th style="text-align: left;">모델 ID</th>
+<th style="text-align: left;">특징</th>
+<th style="text-align: left;">추천 용도</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>values</code></td>
-<td>각 단계 후 전체 상태</td>
+<td style="text-align: left;"><code>gpt-5.2</code></td>
+<td style="text-align: left;">최신 플래그십, 코딩·에이전트 최적화</td>
+<td style="text-align: left;">프로덕션 에이전트, 복잡한 코딩</td>
 </tr>
 <tr>
-<td><code>updates</code></td>
-<td>변경된 부분만</td>
+<td style="text-align: left;"><code>gpt-5</code></td>
+<td style="text-align: left;">코딩·추론·에이전트 범용</td>
+<td style="text-align: left;">범용 고성능 작업</td>
 </tr>
 <tr>
-<td><code>messages</code></td>
-<td>LLM 토큰 단위 스트리밍</td>
+<td style="text-align: left;"><code>gpt-5-mini</code></td>
+<td style="text-align: left;">빠른 응답, 비용 효율적</td>
+<td style="text-align: left;">대규모 워크로드, 일상 작업</td>
 </tr>
 <tr>
-<td><code>custom</code></td>
-<td>사용자 정의 데이터</td>
-</tr>
-<tr>
-<td><code>debug</code></td>
-<td>상세 실행 정보</td>
+<td style="text-align: left;"><code>gpt-5-nano</code></td>
+<td style="text-align: left;">최저 비용, 초고속</td>
+<td style="text-align: left;">요약, 분류, 가벼운 작업</td>
 </tr>
 </tbody>
 </table>
+<br/>
+<ul>
+<li><strong>GPT-4.1 계열</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">모델 ID</th>
+<th style="text-align: left;">특징</th>
+<th style="text-align: left;">추천 용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>gpt-4.1</code></td>
+<td style="text-align: left;">코딩·지시 따르기 강점</td>
+<td style="text-align: left;">코드 생성, 정밀한 지시 수행</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gpt-4.1-mini</code></td>
+<td style="text-align: left;">빠른 응답, 비용 효율적</td>
+<td style="text-align: left;">학습, 실험, 프로토타이핑</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gpt-4.1-nano</code></td>
+<td style="text-align: left;">최저 비용</td>
+<td style="text-align: left;">임베딩 전처리, 단순 변환</td>
+</tr>
+</tbody>
+</table>
+<br/>
+<ul>
+<li><strong>추론 (Reasoning) 모델</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">모델 ID</th>
+<th style="text-align: left;">특징</th>
+<th style="text-align: left;">추천 용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>o3</code></td>
+<td style="text-align: left;">깊은 사고 과정, 복잡한 추론</td>
+<td style="text-align: left;">수학, 과학, 복잡한 분석</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>o4-mini</code></td>
+<td style="text-align: left;">빠른 추론, 수학·코딩 강점</td>
+<td style="text-align: left;">코딩 문제, 논리적 추론</td>
+</tr>
+</tbody>
+</table>
+<br/>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=56ce266d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d65dff37">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
-<h3 id="%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89">비동기 실행<a class="anchor-link" href="#%EB%B9%84%EB%8F%99%EA%B8%B0-%EC%8B%A4%ED%96%89">¶</a></h3><br/>
-<h4 id="ainvoke"><code>ainvoke</code><a class="anchor-link" href="#ainvoke">¶</a></h4><br/>
-<div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">():</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
-    <span class="k">return</span> <span class="n">result</span>
-</pre></div>
-<br/>
-<h4 id="astream"><code>astream</code><a class="anchor-link" href="#astream">¶</a></h4><br/>
-<div class="highlight"><pre><span></span><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_process</span><span class="p">():</span>
-    <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">astream</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-        <span class="n">stream_mode</span><span class="o">=</span><span class="s2">"values"</span>
-    <span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-</pre></div>
-<br/>
-<h4 id="%EB%B3%91%EB%A0%AC-%EC%8B%A4%ED%96%89"><code>병렬 실행</code><a class="anchor-link" href="#%EB%B3%91%EB%A0%AC-%EC%8B%A4%ED%96%89">¶</a></h4><br/>
-<div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<h3 id="%EB%8B%A4%EC%96%91%ED%95%9C-LLM-%EB%AA%A8%EB%8D%B8-%ED%99%9C%EC%9A%A9-%EB%B0%A9%EB%B2%95-(Anthropic-Claude,-Google-Gemini)">다양한 LLM 모델 활용 방법 (Anthropic Claude, Google Gemini)<a class="anchor-link" href="#%EB%8B%A4%EC%96%91%ED%95%9C-LLM-%EB%AA%A8%EB%8D%B8-%ED%99%9C%EC%9A%A9-%EB%B0%A9%EB%B2%95-(Anthropic-Claude,-Google-Gemini)">¶</a></h3><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.chat_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_chat_model</span>
 
-<span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}),</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">10</span><span class="p">}),</span>
-    <span class="n">app</span><span class="o">.</span><span class="n">ainvoke</span><span class="p">({</span><span class="s2">"counter"</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span>
-<span class="p">)</span>
+<span class="c1"># .env 파일에서 환경 변수 로드</span>
+<span class="n">load_dotenv</span><span class="p">()</span>
+
+<span class="c1"># Anthropic Claude 설정</span>
+<span class="n">claude</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span><span class="s2">"anthropic:claude-sonnet-4-6"</span><span class="p">)</span>
+
+<span class="c1"># Google Gemini 설정</span>
+<span class="n">gemini</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span><span class="s2">"google-genai:gemini-2.5-flash"</span><span class="p">)</span>
+
+<span class="c1"># OpenAI GPT (비교를 위해)</span>
+<span class="n">gpt</span> <span class="o">=</span> <span class="n">init_chat_model</span><span class="p">(</span><span class="s2">"openai:gpt-4.1-mini"</span><span class="p">)</span>
+
+<span class="c1"># 동일한 인터페이스로 사용</span>
+<span class="n">claude_response</span> <span class="o">=</span> <span class="n">claude</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Explain the concept of Directed Graph."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Claude's response:"</span><span class="p">,</span> <span class="n">claude_response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+<span class="n">gemini_response</span> <span class="o">=</span> <span class="n">gemini</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">"Explain the components of LangGraph."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Gemini's response:"</span><span class="p">,</span> <span class="n">gemini_response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 </pre></div>
 <br/>
-<h3 id="%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95%EC%9D%98-%EC%84%A0%ED%83%9D">실행 방법의 선택<a class="anchor-link" href="#%EC%8B%A4%ED%96%89-%EB%B0%A9%EB%B2%95%EC%9D%98-%EC%84%A0%ED%83%9D">¶</a></h3><br/>
-<h4 id="invoke-%EA%B6%8C%EC%9E%A5">invoke 권장<a class="anchor-link" href="#invoke-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
-<li>배치 처리 시스템</li>
-<li>단순 API 요청-응답</li>
-<li>테스트 및 디버깅</li>
+<h4 id="%EC%A3%BC%EC%9A%94-%EB%AA%A8%EB%8D%B8-%EB%B9%84%EA%B5%90-(2026%EB%85%84-2%EC%9B%94-%EA%B8%B0%EC%A4%80)">주요 모델 비교 (2026년 2월 기준)<a class="anchor-link" href="#%EC%A3%BC%EC%9A%94-%EB%AA%A8%EB%8D%B8-%EB%B9%84%EA%B5%90-(2026%EB%85%84-2%EC%9B%94-%EA%B8%B0%EC%A4%80)">¶</a></h4><ul>
+<li><strong>Anthropic Claude</strong></li>
 </ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">모델 ID</th>
+<th style="text-align: left;">계열</th>
+<th style="text-align: left;">특징</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>claude-opus-4-6</code></td>
+<td style="text-align: left;">Opus</td>
+<td style="text-align: left;">최고 성능, 에이전트·코딩 최적화</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>claude-sonnet-4-6</code></td>
+<td style="text-align: left;">Sonnet</td>
+<td style="text-align: left;">속도와 성능의 균형, 범용</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>claude-haiku-4-5-20251001</code></td>
+<td style="text-align: left;">Haiku</td>
+<td style="text-align: left;">최고 속도, 비용 효율적</td>
+</tr>
+</tbody>
+</table>
 <br/>
-<h4 id="stream-%EA%B6%8C%EC%9E%A5">stream 권장<a class="anchor-link" href="#stream-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
-<li>실시간 사용자 피드백</li>
-<li>장시간 작업 진행 표시</li>
-<li>챗봇 응답 스트리밍</li>
+<ul>
+<li><strong>Google Gemini</strong><table>
+<thead>
+<tr>
+</tr></thead></table></li>
 </ul>
+<th style="text-align: left;">모델 ID</th>
+<th style="text-align: left;">계열</th>
+<th style="text-align: left;">특징</th>
+
+
+<tbody>
+<tr>
+<td style="text-align: left;"><code>gemini-3-pro-preview</code></td>
+<td style="text-align: left;">Gemini 3</td>
+<td style="text-align: left;">최신 추론·멀티모달, 프리뷰</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gemini-3-flash-preview</code></td>
+<td style="text-align: left;">Gemini 3</td>
+<td style="text-align: left;">속도·확장성 최적화, 프리뷰</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gemini-2.5-pro</code></td>
+<td style="text-align: left;">Gemini 2.5</td>
+<td style="text-align: left;">고급 추론, 100만 토큰 컨텍스트</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gemini-2.5-flash</code></td>
+<td style="text-align: left;">Gemini 2.5</td>
+<td style="text-align: left;">가성비 최고, 안정 릴리스</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gemini-2.5-flash-lite</code></td>
+<td style="text-align: left;">Gemini 2.5</td>
+<td style="text-align: left;">최저 지연·비용</td>
+</tr>
+</tbody>
+
 <br/>
-<h4 id="async-%EA%B6%8C%EC%9E%A5">async 권장<a class="anchor-link" href="#async-%EA%B6%8C%EC%9E%A5">¶</a></h4><ul>
-<li>고동시성 서버</li>
-<li>I/O 집약적 워크플로우</li>
-<li>마이크로서비스 환경</li>
-</ul>
+<h4 id="%EC%9A%A9%EB%8F%84%EB%B3%84-%EC%B6%94%EC%B2%9C:">용도별 추천:<a class="anchor-link" href="#%EC%9A%A9%EB%8F%84%EB%B3%84-%EC%B6%94%EC%B2%9C:">¶</a></h4><blockquote>
+<p><strong>학습/실험</strong>: <code>gpt-4.1-mini</code>, <code>gemini-2.5-flash</code>, <code>claude-haiku-4-5-20251001</code> (저비용)</p>
+<p><strong>프로덕션 범용</strong>: <code>gpt-4.1</code>, <code>claude-sonnet-4-6</code>, <code>gemini-2.5-pro</code></p>
+<p><strong>복잡한 추론</strong>: <code>gpt-5.2</code>, <code>claude-opus-4-6</code>, <code>o3</code></p>
+<p><strong>에이전트 개발</strong>: <code>claude-opus-4-6</code>, <code>gpt-5.2</code>, <code>claude-sonnet-4-6</code></p>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4740ce23">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <br/>
 <hr/>
 </div>
